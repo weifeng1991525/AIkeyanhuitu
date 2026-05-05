@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAI Pro - 让AI成为您的科研伙伴</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy: { 900: '#0A1628', 800: '#0F1F3A', 700: '#152A4A', 600: '#1B3560' },
+        teal: { 500: '#0EA5E9', 400: '#38BDF8', 600: '#0284C7' },
+        amber: { 500: '#F59E0B', 400: '#FBBF24', 600: '#D97706' }
+      },
+      fontFamily: {
+        display: ['Playfair Display', 'serif'],
+        sans: ['DM Sans', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; overflow-x: hidden; }
+.font-display { font-family: 'Playfair Display', serif; }
+
+/* Dot pattern background */
+.dot-pattern {
+  background-image: radial-gradient(circle, rgba(14,165,233,0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(15, 31, 58, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+}
+.glass-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #0EA5E9, #38BDF8, #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animations */
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(14,165,233,0.3); } 50% { box-shadow: 0 0 40px rgba(14,165,233,0.6), 0 0 60px rgba(14,165,233,0.2); } }
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-in-right { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes wechat-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(7,193,96,0.3); } 50% { box-shadow: 0 0 50px rgba(7,193,96,0.6), 0 0 80px rgba(7,193,96,0.2); } }
+@keyframes count-up { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 8s linear infinite; }
+.animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+.animate-slide-in { animation: slide-in-right 0.5s ease-out forwards; }
+.animate-wechat { animation: wechat-pulse 2s ease-in-out infinite; }
+
+.shimmer-bg {
+  background: linear-gradient(90deg, rgba(14,165,233,0.1) 25%, rgba(14,165,233,0.3) 50%, rgba(14,165,233,0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A1628; }
+::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,165,233,0.5); }
+
+/* Tab transitions */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fade-in 0.4s ease-out; }
+
+/* Card hover */
+.card-hover { transition: all 0.3s ease; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(14,165,233,0.15); border-color: rgba(14,165,233,0.3); }
+
+/* Loading spinner */
+.spinner { border: 3px solid rgba(14,165,233,0.2); border-top: 3px solid #0EA5E9; border-radius: 50%; width: 40px; height: 40px; animation: spin-slow 1s linear infinite; }
+
+/* Admin styles */
+.admin-sidebar-item { transition: all 0.2s ease; }
+.admin-sidebar-item:hover, .admin-sidebar-item.active { background: rgba(14,165,233,0.15); border-left: 3px solid #0EA5E9; }
+
+/* Mobile menu */
+.mobile-menu { transform: translateX(100%); transition: transform 0.3s ease; }
+.mobile-menu.open { transform: translateX(0); }
+
+/* Collapsible */
+.collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.collapsible-content.open { max-height: 2000px; }
+
+/* Timeline */
+.timeline-line { position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #0EA5E9, #F59E0B); }
+.timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #0EA5E9; border: 2px solid #0A1628; position: absolute; left: 19px; top: 6px; z-index: 1; }
+
+/* Tooltip */
+.tooltip { position: relative; }
+.tooltip::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1B3560; color: #E2E8F0; padding: 4px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.tooltip:hover::after { opacity: 1; }
+
+/* Stat counter */
+.stat-number { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="dot-pattern min-h-screen">
+
+<!-- ========== MAIN NAVBAR ========== -->
+<nav id="mainNavbar" class="fixed top-0 left-0 right-0 z-50 glass border-b border-teal-500/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-amber-500 flex items-center justify-center">
+          <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-display font-bold text-xl text-white">MedAI <span class="text-teal-400">Pro</span></span>
+      </div>
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-1">
+        <button onclick="switchTab('home')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" data-tab="home">首页</button>
+        <button onclick="switchTab('hypothesis')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" data-tab="hypothesis">假说图生成</button>
+        <button onclick="switchTab('roadmap')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" data-tab="roadmap">技术路线图</button>
+        <button onclick="switchTab('custom')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" data-tab="custom">自定义出图</button>
+        <button onclick="switchTab('tools')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" data-tab="tools">扩展工具</button>
+      </div>
+      <!-- Right side -->
+      <div class="hidden md:flex items-center gap-3">
+        <button onclick="switchTab('membership')" class="px-4 py-2 rounded-lg text-sm font-medium text-teal-400 hover:bg-teal-500/10 transition-all">会员中心</button>
+        <button onclick="switchTab('login')" class="px-5 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-400 hover:to-teal-500 transition-all shadow-lg shadow-teal-500/25">登录</button>
+      </div>
+      <!-- Mobile hamburger -->
+      <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/5" onclick="toggleMobileMenu()">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div id="mobileMenu" class="mobile-menu fixed inset-y-0 right-0 w-72 z-50 glass border-l border-teal-500/10 p-6">
+  <div class="flex justify-between items-center mb-8">
+    <span class="font-display font-bold text-lg text-white">菜单</span>
+    <button onclick="toggleMobileMenu()" class="p-2 rounded-lg hover:bg-white/5"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <div class="flex flex-col gap-2">
+    <button onclick="switchTab('home');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">首页</button>
+    <button onclick="switchTab('hypothesis');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">假说图生成</button>
+    <button onclick="switchTab('roadmap');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">技术路线图</button>
+    <button onclick="switchTab('custom');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">自定义出图</button>
+    <button onclick="switchTab('tools');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">扩展工具</button>
+    <button onclick="switchTab('membership');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all">会员中心</button>
+    <hr class="border-white/10 my-2">
+    <button onclick="switchTab('login');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg bg-teal-500/20 text-teal-400 font-medium">登录</button>
+    <button onclick="switchTab('admin');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-all text-sm text-gray-500">管理后台</button>
+  </div>
+</div>
+<div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleMobileMenu()"></div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="pt-16">
+
+<!-- ==================== TAB 1: HOME ==================== -->
+<div id="tab-home" class="tab-content active">
+  <!-- Hero -->
+  <section class="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
+    <div class="absolute inset-0">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative text-center max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-light text-sm text-teal-400 mb-8 animate-fade-in">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span>AI驱动的医学科研平台</span>
+      </div>
+      <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+        让<span class="gradient-text">AI</span>成为您的<br>科研伙伴
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+        从假说生成到论文撰写，MedAI Pro为医学研究者提供全流程AI辅助，加速科研创新
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="switchTab('hypothesis')" class="px-8 py-4 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold text-lg hover:from-teal-400 hover:to-teal-500 transition-all shadow-xl shadow-teal-500/25 flex items-center justify-center gap-2">
+          开始使用 <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </button>
+        <button onclick="switchTab('tools')" class="px-8 py-4 rounded-xl glass-light text-white font-semibold text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="layout-grid" class="w-5 h-5"></i> 探索工具
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Cards -->
+  <section class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mb-4">核心功能</h2>
+        <p class="text-gray-400 text-lg">覆盖医学科研全流程的AI工具集</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer" onclick="switchTab('hypothesis')">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-teal-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="git-branch" class="w-6 h-6 text-teal-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">假说图生成</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">输入研究假说，AI自动生成可视化机制图，清晰展示分子调控网络</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer" onclick="switchTab('roadmap')">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="route" class="w-6 h-6 text-amber-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">技术路线图</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">智能规划研究技术路线，自动生成分阶段实验方案与时间节点</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer" onclick="switchTab('custom')">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="image" class="w-6 h-6 text-purple-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">自定义出图</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">自定义提示词生成科研图表、机制图、流程图等专业图像</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="bar-chart-3" class="w-6 h-6 text-green-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">数据分析</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">支持多种统计方法，自动选择最优检验策略并生成分析报告</p>
+        </div>
+        <!-- Card 5 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="file-text" class="w-6 h-6 text-rose-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">论文辅助</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">从大纲到成稿，AI辅助SCI论文撰写，符合IMRAD结构规范</p>
+        </div>
+        <!-- Card 6 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="dna" class="w-6 h-6 text-cyan-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">生信分析</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">RNA-seq、单细胞测序等组学数据分析，一键生成可视化结果</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="py-20 px-4">
+    <div class="max-w-5xl mx-auto">
+      <div class="glass rounded-3xl p-8 sm:p-12">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div class="text-3xl sm:text-4xl font-bold text-teal-400 stat-number mb-2" data-target="10000">0</div>
+            <div class="text-sm text-gray-400">活跃研究者</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl sm:text-4xl font-bold text-amber-400 stat-number mb-2" data-target="50000">0</div>
+            <div class="text-sm text-gray-400">生成假说</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl sm:text-4xl font-bold text-green-400 stat-number mb-2" data-target="98.5" data-suffix="%" data-decimal="1">0</div>
+            <div class="text-sm text-gray-400">用户满意度</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl sm:text-4xl font-bold text-purple-400 stat-number mb-2" data-target="200" data-suffix="+">0</div>
+            <div class="text-sm text-gray-400">合作期刊</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="py-20 px-4">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mb-4">如何使用</h2>
+        <p class="text-gray-400 text-lg">三步开启AI科研之旅</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-500/25">
+            <span class="text-2xl font-bold text-white">1</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">输入研究内容</h3>
+          <p class="text-gray-400 text-sm">描述您的研究假说或需求，AI理解您的科研方向</p>
+        </div>
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/25">
+            <span class="text-2xl font-bold text-white">2</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">AI智能生成</h3>
+          <p class="text-gray-400 text-sm">AI自动分析并生成假说图、技术路线等专业内容</p>
+        </div>
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/25">
+            <span class="text-2xl font-bold text-white">3</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">导出与优化</h3>
+          <p class="text-gray-400 text-sm">一键导出高清图片，支持反复优化调整</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust + CTA -->
+  <section class="py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="flex flex-wrap justify-center gap-8 mb-12 opacity-60">
+        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="shield-check" class="w-5 h-5"></i><span class="text-sm">数据安全加密</span></div>
+        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="lock" class="w-5 h-5"></i><span class="text-sm">隐私保护</span></div>
+        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="award" class="w-5 h-5"></i><span class="text-sm">学术规范</span></div>
+        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="clock" class="w-5 h-5"></i><span class="text-sm">7x24服务</span></div>
+      </div>
+      <div class="glass rounded-3xl p-10 sm:p-16 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-amber-500/5"></div>
+        <div class="relative">
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mb-4">准备好加速您的科研了吗?</h2>
+          <p class="text-gray-400 text-lg mb-8">加入10,000+研究者，体验AI驱动的科研新范式</p>
+          <button onclick="switchTab('login')" class="px-8 py-4 rounded-xl bg-gradient-to-r from-teal-500 to-amber-500 text-white font-semibold text-lg hover:from-teal-400 hover:to-amber-400 transition-all shadow-xl shadow-teal-500/25">
+            免费开始使用
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ==================== TAB 2: HYPOTHESIS ==================== -->
+<div id="tab-hypothesis" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">假说图生成</h1>
+        <p class="text-gray-400">输入研究假说，AI自动生成可视化机制图</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Panel -->
+        <div class="space-y-6">
+          <div class="glass rounded-2xl p-6">
+            <textarea id="hypoInput" rows="6" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/25 resize-none text-sm leading-relaxed" placeholder="请输入您的研究假说，例如：circRNA在结直肠癌中通过吸附miR-456调控PTEN通路的机制研究"></textarea>
+            <button onclick="generateHypothesis()" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold hover:from-teal-400 hover:to-teal-500 transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
+              <i data-lucide="sparkles" class="w-5 h-5"></i> 生成假说图
+            </button>
+          </div>
+          <!-- Cases -->
+          <div class="glass rounded-2xl overflow-hidden">
+            <button onclick="toggleCollapsible('hypoCases')" class="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-all">
+              <span class="font-medium text-white flex items-center gap-2"><i data-lucide="bookmark" class="w-4 h-4 text-amber-400"></i> 查看案例</span>
+              <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform" id="hypoCases-icon"></i>
+            </button>
+            <div id="hypoCases" class="collapsible-content">
+              <div class="px-6 pb-6 space-y-3">
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadHypoCase(0)">
+                  <h4 class="text-sm font-semibold text-white mb-1">circRNA在结直肠癌中的调控机制</h4>
+                  <p class="text-xs text-gray-400 mb-3">circRNA通过ceRNA网络调控肿瘤增殖、凋亡与转移</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-400 text-xs font-medium hover:bg-teal-500/30 transition-all">使用此案例</button>
+                </div>
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadHypoCase(1)">
+                  <h4 class="text-sm font-semibold text-white mb-1">PD-1/PD-L1抑制剂在非小细胞肺癌中的耐药机制</h4>
+                  <p class="text-xs text-gray-400 mb-3">探索免疫检查点抑制剂获得性耐药的分子机制</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-400 text-xs font-medium hover:bg-teal-500/30 transition-all">使用此案例</button>
+                </div>
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadHypoCase(2)">
+                  <h4 class="text-sm font-semibold text-white mb-1">肠道菌群通过肠脑轴调控抑郁症的分子机制</h4>
+                  <p class="text-xs text-gray-400 mb-3">微生物-肠-脑轴介导的神经炎症与神经递质调控</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-400 text-xs font-medium hover:bg-teal-500/30 transition-all">使用此案例</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div>
+          <div id="hypoResult" class="glass rounded-2xl p-6 min-h-[500px] flex items-center justify-center">
+            <div class="text-center text-gray-500">
+              <i data-lucide="image-plus" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+              <p class="text-sm">输入假说或选择案例后<br>点击生成查看结果</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 3: ROADMAP ==================== -->
+<div id="tab-roadmap" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">技术路线图</h1>
+        <p class="text-gray-400">输入研究内容，AI智能规划技术路线</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Panel -->
+        <div class="space-y-6">
+          <div class="glass rounded-2xl p-6">
+            <textarea id="roadInput" rows="6" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/25 resize-none text-sm leading-relaxed" placeholder="请输入您的研究内容，例如：研究circRNA_00123在结直肠癌中的功能..."></textarea>
+            <button onclick="generateRoadmap()" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2">
+              <i data-lucide="route" class="w-5 h-5"></i> 生成技术路线
+            </button>
+          </div>
+          <!-- Cases -->
+          <div class="glass rounded-2xl overflow-hidden">
+            <button onclick="toggleCollapsible('roadCases')" class="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-all">
+              <span class="font-medium text-white flex items-center gap-2"><i data-lucide="bookmark" class="w-4 h-4 text-amber-400"></i> 查看案例</span>
+              <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform" id="roadCases-icon"></i>
+            </button>
+            <div id="roadCases" class="collapsible-content">
+              <div class="px-6 pb-6 space-y-3">
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadRoadCase(0)">
+                  <h4 class="text-sm font-semibold text-white mb-1">circRNA在肿瘤中的功能研究技术路线</h4>
+                  <p class="text-xs text-gray-400 mb-3">从表达筛选到功能验证的完整研究方案</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium hover:bg-amber-500/30 transition-all">使用此案例</button>
+                </div>
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadRoadCase(1)">
+                  <h4 class="text-sm font-semibold text-white mb-1">新型PD-1抑制剂临床前研究路线</h4>
+                  <p class="text-xs text-gray-400 mb-3">药物筛选、药效学与安全性评价研究方案</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium hover:bg-amber-500/30 transition-all">使用此案例</button>
+                </div>
+                <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadRoadCase(2)">
+                  <h4 class="text-sm font-semibold text-white mb-1">单细胞测序解析肿瘤微环境研究方案</h4>
+                  <p class="text-xs text-gray-400 mb-3">scRNA-seq解析TME细胞组成与互作网络</p>
+                  <button class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium hover:bg-amber-500/30 transition-all">使用此案例</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div>
+          <div id="roadResult" class="glass rounded-2xl p-6 min-h-[500px] flex items-center justify-center">
+            <div class="text-center text-gray-500">
+              <i data-lucide="map" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+              <p class="text-sm">输入研究内容或选择案例后<br>点击生成查看技术路线</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 4: CUSTOM PROMPT ==================== -->
+<div id="tab-custom" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">自定义出图</h1>
+        <p class="text-gray-400">通过自定义提示词生成专业科研图像</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Panel -->
+        <div class="space-y-6">
+          <!-- Prompt Input -->
+          <div class="glass rounded-2xl p-6">
+            <label class="block text-sm font-medium text-gray-300 mb-3">提示词</label>
+            <textarea id="customPrompt" rows="8" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/25 resize-none text-sm leading-relaxed" placeholder="请输入图像描述提示词，例如：A scientific illustration showing the mechanism of PD-1/PD-L1 interaction in tumor microenvironment, with T cells and cancer cells, professional medical illustration style..."></textarea>
+          </div>
+          <!-- Save Prompt -->
+          <div class="glass rounded-2xl overflow-hidden">
+            <button onclick="toggleCollapsible('savePrompt')" class="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-all">
+              <span class="font-medium text-white flex items-center gap-2"><i data-lucide="save" class="w-4 h-4 text-teal-400"></i> 保存提示词</span>
+              <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform" id="savePrompt-icon"></i>
+            </button>
+            <div id="savePrompt" class="collapsible-content">
+              <div class="px-6 pb-6">
+                <input id="promptName" type="text" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm mb-3" placeholder="输入提示词名称">
+                <button onclick="saveCustomPrompt()" class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all">保存</button>
+              </div>
+            </div>
+          </div>
+          <!-- My Prompts -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2"><i data-lucide="folder" class="w-4 h-4 text-amber-400"></i> 我的提示词</h3>
+            <div id="savedPromptsList" class="space-y-3">
+              <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadSavedPrompt(0)">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">肿瘤微环境机制图</h4>
+                    <p class="text-xs text-gray-400">PD-1/PD-L1免疫检查点通路...</p>
+                  </div>
+                  <button onclick="event.stopPropagation();deleteSavedPrompt(0)" class="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+                <div class="mt-2 flex items-center gap-1 text-xs text-gray-500"><i data-lucide="repeat" class="w-3 h-3"></i> 使用 12 次</div>
+              </div>
+              <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadSavedPrompt(1)">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">信号通路示意图</h4>
+                    <p class="text-xs text-gray-400">PI3K/AKT/mTOR信号通路...</p>
+                  </div>
+                  <button onclick="event.stopPropagation();deleteSavedPrompt(1)" class="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+                <div class="mt-2 flex items-center gap-1 text-xs text-gray-500"><i data-lucide="repeat" class="w-3 h-3"></i> 使用 8 次</div>
+              </div>
+              <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadSavedPrompt(2)">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">实验流程图</h4>
+                    <p class="text-xs text-gray-400">Western Blot实验操作流程...</p>
+                  </div>
+                  <button onclick="event.stopPropagation();deleteSavedPrompt(2)" class="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+                <div class="mt-2 flex items-center gap-1 text-xs text-gray-500"><i data-lucide="repeat" class="w-3 h-3"></i> 使用 5 次</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div class="space-y-4">
+          <!-- Settings -->
+          <div class="glass rounded-2xl p-6">
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">模型</label>
+                <select class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option>DALL-E 3</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">尺寸</label>
+                <select id="imgSize" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option value="1024x1024">1024x1024</option>
+                  <option value="1792x1024">1792x1024</option>
+                  <option value="1024x1792">1024x1792</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">质量</label>
+                <select class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option>HD</option>
+                  <option>Standard</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="generateCustomImage()" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold hover:from-purple-400 hover:to-purple-500 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2">
+              <i data-lucide="wand-2" class="w-5 h-5"></i> 生成图片
+            </button>
+          </div>
+          <!-- Result -->
+          <div id="customResult" class="glass rounded-2xl p-6 min-h-[400px] flex items-center justify-center">
+            <div class="text-center text-gray-500">
+              <i data-lucide="image-plus" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+              <p class="text-sm">输入提示词后点击生成<br>AI将为您创建专业图像</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 5: TOOLS ==================== -->
+<div id="tab-tools" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="mb-10">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">扩展工具</h1>
+        <p class="text-gray-400">丰富的科研工具集，持续更新中</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Tool 1 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer relative" onclick="switchTab('custom')">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">可用</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="wand-2" class="w-6 h-6 text-purple-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">自定义提示词出图</h3>
+          <p class="text-gray-400 text-sm">通过自然语言描述生成科研图表、机制图等专业图像</p>
+        </div>
+        <!-- Tool 2 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer relative">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">可用</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-teal-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="palette" class="w-6 h-6 text-teal-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">科研绘图</h3>
+          <p class="text-gray-400 text-sm">专业科研图表绘制，支持多种图表类型与期刊格式</p>
+        </div>
+        <!-- Tool 3 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer relative">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">可用</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="bar-chart-3" class="w-6 h-6 text-green-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">统计分析</h3>
+          <p class="text-gray-400 text-sm">自动选择统计方法，生成分析报告与可视化图表</p>
+        </div>
+        <!-- Tool 4 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="file-text" class="w-6 h-6 text-rose-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">论文写作</h3>
+          <p class="text-gray-400 text-sm">AI辅助SCI论文撰写，符合IMRAD结构规范</p>
+        </div>
+        <!-- Tool 5 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="dna" class="w-6 h-6 text-cyan-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">生信分析</h3>
+          <p class="text-gray-400 text-sm">RNA-seq、单细胞测序等组学数据分析工具</p>
+        </div>
+        <!-- Tool 6 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="calculator" class="w-6 h-6 text-blue-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">样本量计算</h3>
+          <p class="text-gray-400 text-sm">根据研究设计自动计算所需样本量与统计功效</p>
+        </div>
+        <!-- Tool 7 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="search" class="w-6 h-6 text-indigo-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">文献检索</h3>
+          <p class="text-gray-400 text-sm">智能文献搜索与筛选，快速定位相关研究</p>
+        </div>
+        <!-- Tool 8 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-50">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">规划中</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="flask-conical" class="w-6 h-6 text-orange-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">实验设计</h3>
+          <p class="text-gray-400 text-sm">AI辅助实验方案设计与优化</p>
+        </div>
+        <!-- Tool 9 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-50">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">规划中</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="beaker" class="w-6 h-6 text-pink-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">试剂计算器</h3>
+          <p class="text-gray-400 text-sm">实验试剂浓度、体积快速计算工具</p>
+        </div>
+        <!-- Tool 10 -->
+        <div class="glass rounded-2xl p-6 card-hover relative opacity-50">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">规划中</span></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center mb-4">
+            <i data-lucide="file-check" class="w-6 h-6 text-emerald-400"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">NSFC申请书</h3>
+          <p class="text-gray-400 text-sm">国自然基金申请书智能撰写辅助</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 6: MEMBERSHIP ==================== -->
+<div id="tab-membership" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">会员中心</h1>
+        <p class="text-gray-400">选择适合您的方案</p>
+      </div>
+      <!-- Pricing Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <!-- Free -->
+        <div class="glass rounded-2xl p-6 card-hover">
+          <div class="text-sm text-gray-400 mb-2">免费版</div>
+          <div class="text-3xl font-bold text-white mb-1">¥0<span class="text-sm font-normal text-gray-400">/月</span></div>
+          <p class="text-xs text-gray-500 mb-6">适合体验用户</p>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 每日3次生成</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 基础功能</li>
+            <li class="flex items-center gap-2 text-sm text-gray-500"><i data-lucide="x" class="w-4 h-4 text-gray-600"></i> 高级分析</li>
+            <li class="flex items-center gap-2 text-sm text-gray-500"><i data-lucide="x" class="w-4 h-4 text-gray-600"></i> API接入</li>
+          </ul>
+          <button class="w-full py-2.5 rounded-xl border border-white/10 text-white text-sm font-medium hover:bg-white/5 transition-all">当前方案</button>
+        </div>
+        <!-- Basic -->
+        <div class="glass rounded-2xl p-6 card-hover">
+          <div class="text-sm text-teal-400 mb-2">基础版</div>
+          <div class="text-3xl font-bold text-white mb-1">¥99<span class="text-sm font-normal text-gray-400">/月</span></div>
+          <p class="text-xs text-gray-500 mb-6">适合个人研究者</p>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 每日50次生成</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 全部基础功能</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 基础数据分析</li>
+            <li class="flex items-center gap-2 text-sm text-gray-500"><i data-lucide="x" class="w-4 h-4 text-gray-600"></i> API接入</li>
+          </ul>
+          <button class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all">升级</button>
+        </div>
+        <!-- Pro -->
+        <div class="glass rounded-2xl p-6 card-hover relative border-teal-500/30">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-teal-500 to-amber-500 text-white text-xs font-medium">推荐</div>
+          <div class="text-sm text-amber-400 mb-2">专业版</div>
+          <div class="text-3xl font-bold text-white mb-1">¥299<span class="text-sm font-normal text-gray-400">/月</span></div>
+          <p class="text-xs text-gray-500 mb-6">适合课题组</p>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 无限次生成</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 全部高级功能</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 高级数据分析</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 优先客服</li>
+          </ul>
+          <button class="w-full py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-semibold hover:from-teal-400 hover:to-teal-500 transition-all shadow-lg shadow-teal-500/25">升级</button>
+        </div>
+        <!-- Enterprise -->
+        <div class="glass rounded-2xl p-6 card-hover">
+          <div class="text-sm text-purple-400 mb-2">企业版</div>
+          <div class="text-3xl font-bold text-white mb-1">定制<span class="text-sm font-normal text-gray-400"></span></div>
+          <p class="text-xs text-gray-500 mb-6">适合机构/医院</p>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 全部专业版功能</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> API接入</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 私有部署</li>
+            <li class="flex items-center gap-2 text-sm text-gray-300"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 专属客户经理</li>
+          </ul>
+          <button class="w-full py-2.5 rounded-xl border border-purple-500/30 text-purple-400 text-sm font-medium hover:bg-purple-500/10 transition-all">联系我们</button>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="max-w-3xl mx-auto">
+        <h2 class="font-display text-2xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-teal-400"></i> 账户设置</h2>
+        <div class="space-y-6">
+          <!-- Bind Phone -->
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-medium text-white flex items-center gap-2"><i data-lucide="smartphone" class="w-5 h-5 text-teal-400"></i> 绑定手机号</h3>
+              <span id="phoneStatus" class="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs">未绑定</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="phoneInput" type="tel" class="flex-1 bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="请输入手机号">
+              <button id="phoneCodeBtn" onclick="sendPhoneCode()" class="px-4 py-3 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all whitespace-nowrap">获取验证码</button>
+              <input id="phoneCodeInput" type="text" class="w-full sm:w-32 bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="验证码">
+              <button onclick="bindPhone()" class="px-6 py-3 rounded-xl bg-teal-500 text-white text-sm font-medium hover:bg-teal-400 transition-all whitespace-nowrap">保存</button>
+            </div>
+          </div>
+          <!-- Bind Email -->
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-medium text-white flex items-center gap-2"><i data-lucide="mail" class="w-5 h-5 text-amber-400"></i> 绑定邮箱</h3>
+              <span id="emailStatus" class="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs">未绑定</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="emailInput" type="email" class="flex-1 bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="请输入邮箱地址">
+              <button id="emailCodeBtn" onclick="sendEmailCode()" class="px-4 py-3 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all whitespace-nowrap">获取验证码</button>
+              <input id="emailCodeInput" type="text" class="w-full sm:w-32 bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="验证码">
+              <button onclick="bindEmail()" class="px-6 py-3 rounded-xl bg-amber-500 text-white text-sm font-medium hover:bg-amber-400 transition-all whitespace-nowrap">保存</button>
+            </div>
+          </div>
+          <!-- Change Password (hidden until email bound) -->
+          <div id="passwordSection" class="glass rounded-2xl p-6 hidden">
+            <h3 class="font-medium text-white flex items-center gap-2 mb-4"><i data-lucide="lock" class="w-5 h-5 text-rose-400"></i> 修改密码</h3>
+            <div class="space-y-3">
+              <input id="oldPwd" type="password" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="旧密码">
+              <input id="newPwd" type="password" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="新密码">
+              <input id="confirmPwd" type="password" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 text-sm" placeholder="确认新密码">
+              <button onclick="changePassword()" class="w-full py-3 rounded-xl bg-rose-500/20 text-rose-400 text-sm font-medium hover:bg-rose-500/30 transition-all">修改密码</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 7: LOGIN ==================== -->
+<div id="tab-login" class="tab-content">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+      <div class="glass rounded-3xl p-10 text-center">
+        <div class="mb-8">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-amber-500 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-500/25">
+            <i data-lucide="brain" class="w-8 h-8 text-white"></i>
+          </div>
+          <h1 class="font-display text-2xl font-bold text-white mb-2">欢迎回来</h1>
+          <p class="text-gray-400 text-sm">登录MedAI Pro，继续您的科研之旅</p>
+        </div>
+        <!-- WeChat QR Code -->
+        <div class="relative inline-block mb-8">
+          <div class="w-52 h-52 rounded-2xl bg-white mx-auto flex items-center justify-center animate-wechat relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100"></div>
+            <div class="relative text-center">
+              <!-- WeChat Icon SVG -->
+              <svg class="w-20 h-20 mx-auto mb-2" viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="90" fill="#07C160" opacity="0.1"/>
+                <path d="M70 60c-22 0-40 16-40 36s18 36 40 36c5 0 9-1 13-2l12 6-3-11c8-7 13-17 13-29 0-20-18-36-35-36zm-12 24c-4 0-7-3-7-7s3-7 7-7 7 3 7 7-3 7-7 7zm24 0c-4 0-7-3-7-7s3-7 7-7 7 3 7 7-3 7-7 7z" fill="#07C160"/>
+                <path d="M140 80c-20 0-36 14-36 32s16 32 36 32c4 0 8-1 12-2l10 5-3-9c7-6 11-15 11-26 0-18-16-32-30-32zm-10 20c-3 0-6-3-6-6s3-6 6-6 6 3 6 6-3 6-6 6zm20 0c-3 0-6-3-6-6s3-6 6-6 6 3 6 6-3 6-6 6z" fill="#07C160"/>
+              </svg>
+              <div class="text-green-600 text-xs font-medium">微信二维码</div>
+            </div>
+          </div>
+          <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-green-500/20 to-green-500/5 -z-10 blur-sm"></div>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-1">微信扫码登录</h3>
+        <p class="text-gray-400 text-sm mb-8">扫码后自动登录</p>
+        <div class="text-xs text-gray-500 space-y-1">
+          <p>登录即表示您同意 <a href="#" class="text-teal-400 hover:underline">服务条款</a> 和 <a href="#" class="text-teal-400 hover:underline">隐私政策</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 8: ADMIN ==================== -->
+<div id="tab-admin" class="tab-content">
+  <!-- Admin has its own layout, no main navbar -->
+  <div class="min-h-screen bg-gray-950">
+    <!-- Admin Header -->
+    <header class="bg-gray-900 border-b border-gray-800 h-14 flex items-center px-6 sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <i data-lucide="shield" class="w-5 h-5 text-teal-400"></i>
+        <span class="font-semibold text-white">MedAI Pro <span class="text-gray-500">/</span> <span class="text-teal-400">管理后台</span></span>
+      </div>
+      <div class="ml-auto">
+        <button onclick="switchTab('home')" class="text-sm text-gray-400 hover:text-white transition-all flex items-center gap-1">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> 返回前台
+        </button>
+      </div>
+    </header>
+
+    <!-- Admin Verification Gate -->
+    <div id="adminGate" class="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      <div class="text-center">
+        <div class="w-20 h-20 rounded-2xl bg-gray-800 flex items-center justify-center mx-auto mb-6">
+          <i data-lucide="shield-check" class="w-10 h-10 text-gray-500"></i>
+        </div>
+        <h2 class="text-xl font-semibold text-white mb-2">管理员登录验证</h2>
+        <p class="text-gray-400 text-sm mb-6">请验证管理员身份以访问后台</p>
+        <button onclick="adminLogin()" class="px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold hover:from-teal-400 hover:to-teal-500 transition-all shadow-lg shadow-teal-500/25">
+          管理员登录
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard (hidden initially) -->
+    <div id="adminDashboard" class="hidden">
+      <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-60 min-h-[calc(100vh-56px)] bg-gray-900 border-r border-gray-800 p-4 fixed left-0 top-14 bottom-0 hidden lg:block">
+          <nav class="space-y-1">
+            <button onclick="switchAdminView('dashboard')" class="admin-sidebar-item active w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="dashboard">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i> 仪表盘
+            </button>
+            <button onclick="switchAdminView('prompts')" class="admin-sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="prompts">
+              <i data-lucide="message-square" class="w-4 h-4"></i> 提示词管理
+            </button>
+            <button onclick="switchAdminView('skills')" class="admin-sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="skills">
+              <i data-lucide="zap" class="w-4 h-4"></i> Skill管理
+            </button>
+            <button onclick="switchAdminView('analytics')" class="admin-sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="analytics">
+              <i data-lucide="trending-up" class="w-4 h-4"></i> 统计分析
+            </button>
+            <button onclick="switchAdminView('members')" class="admin-sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="members">
+              <i data-lucide="users" class="w-4 h-4"></i> 会员管理
+            </button>
+            <button onclick="switchAdminView('orders')" class="admin-sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm text-gray-300 flex items-center gap-3" data-view="orders">
+              <i data-lucide="receipt" class="w-4 h-4"></i> 充值订单
+            </button>
+          </nav>
+        </aside>
+        <!-- Main Content -->
+        <div class="flex-1 lg:ml-60 p-6">
+          <!-- Dashboard View -->
+          <div id="adminView-dashboard" class="admin-view">
+            <h2 class="text-xl font-semibold text-white mb-6">仪表盘</h2>
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm text-gray-400">总用户数</span>
+                  <div class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center"><i data-lucide="users" class="w-4 h-4 text-teal-400"></i></div>
+                </div>
+                <div class="text-2xl font-bold text-white">12,847</div>
+                <div class="text-xs text-green-400 mt-1">+12.5% <span class="text-gray-500">vs 上月</span></div>
+              </div>
+              <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm text-gray-400">今日生成</span>
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i></div>
+                </div>
+                <div class="text-2xl font-bold text-white">3,429</div>
+                <div class="text-xs text-green-400 mt-1">+8.3% <span class="text-gray-500">vs 昨日</span></div>
+              </div>
+              <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm text-gray-400">活跃会员</span>
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><i data-lucide="crown" class="w-4 h-4 text-purple-400"></i></div>
+                </div>
+                <div class="text-2xl font-bold text-white">1,256</div>
+                <div class="text-xs text-green-400 mt-1">+5.2% <span class="text-gray-500">vs 上月</span></div>
+              </div>
+              <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm text-gray-400">月收入</span>
+                  <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center"><i data-lucide="dollar-sign" class="w-4 h-4 text-green-400"></i></div>
+                </div>
+                <div class="text-2xl font-bold text-white">¥284K</div>
+                <div class="text-xs text-green-400 mt-1">+18.7% <span class="text-gray-500">vs 上月</span></div>
+              </div>
+            </div>
+            <!-- Mock Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <h3 class="text-sm font-medium text-white mb-4">用户增长趋势</h3>
+                <div class="h-48 flex items-end gap-2 px-2">
+                  <div class="flex-1 bg-teal-500/20 rounded-t" style="height:40%"></div>
+                  <div class="flex-1 bg-teal-500/30 rounded-t" style="height:55%"></div>
+                  <div class="flex-1 bg-teal-500/20 rounded-t" style="height:45%"></div>
+                  <div class="flex-1 bg-teal-500/40 rounded-t" style="height:65%"></div>
+                  <div class="flex-1 bg-teal-500/30 rounded-t" style="height:50%"></div>
+                  <div class="flex-1 bg-teal-500/50 rounded-t" style="height:75%"></div>
+                  <div class="flex-1 bg-teal-500/40 rounded-t" style="height:60%"></div>
+                  <div class="flex-1 bg-teal-500/60 rounded-t" style="height:85%"></div>
+                  <div class="flex-1 bg-teal-500/50 rounded-t" style="height:70%"></div>
+                  <div class="flex-1 bg-teal-500/70 rounded-t" style="height:90%"></div>
+                  <div class="flex-1 bg-teal-500/60 rounded-t" style="height:80%"></div>
+                  <div class="flex-1 bg-gradient-to-t from-teal-500 to-teal-400 rounded-t" style="height:100%"></div>
+                </div>
+                <div class="flex justify-between mt-2 text-xs text-gray-500 px-2">
+                  <span>1月</span><span>6月</span><span>12月</span>
+                </div>
+              </div>
+              <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <h3 class="text-sm font-medium text-white mb-4">功能使用分布</h3>
+                <div class="space-y-4 mt-6">
+                  <div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-300">假说图生成</span><span class="text-teal-400">42%</span></div>
+                    <div class="h-2 bg-gray-800 rounded-full"><div class="h-2 bg-teal-500 rounded-full" style="width:42%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-300">技术路线图</span><span class="text-amber-400">28%</span></div>
+                    <div class="h-2 bg-gray-800 rounded-full"><div class="h-2 bg-amber-500 rounded-full" style="width:28%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-300">自定义出图</span><span class="text-purple-400">18%</span></div>
+                    <div class="h-2 bg-gray-800 rounded-full"><div class="h-2 bg-purple-500 rounded-full" style="width:18%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-300">其他工具</span><span class="text-green-400">12%</span></div>
+                    <div class="h-2 bg-gray-800 rounded-full"><div class="h-2 bg-green-500 rounded-full" style="width:12%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Other Admin Views (placeholder) -->
+          <div id="adminView-prompts" class="admin-view hidden">
+            <h2 class="text-xl font-semibold text-white mb-6">提示词管理</h2>
+            <div class="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center text-gray-500">
+              <i data-lucide="message-square" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+              <p>提示词管理模块</p>
+            </div>
+          </div>
+          <div id="adminView-skills" class="admin-view hidden">
+            <h2 class="text-xl font-semibold text-white mb-6">Skill管理</h2>
+            <div class="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center text-gray-500">
+              <i data-lucide="zap" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+              <p>Skill管理模块</p>
+            </div>
+          </div>
+          <div id="adminView-analytics" class="admin-view hidden">
+            <h2 class="text-xl font-semibold text-white mb-6">统计分析</h2>
+            <div class="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center text-gray-500">
+              <i data-lucide="trending-up" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+              <p>统计分析模块</p>
+            </div>
+          </div>
+          <div id="adminView-members" class="admin-view hidden">
+            <h2 class="text-xl font-semibold text-white mb-6">会员管理</h2>
+            <div class="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center text-gray-500">
+              <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+              <p>会员管理模块</p>
+            </div>
+          </div>
+          <div id="adminView-orders" class="admin-view hidden">
+            <h2 class="text-xl font-semibold text-white mb-6">充值订单</h2>
+            <div class="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center text-gray-500">
+              <i data-lucide="receipt" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+              <p>充值订单模块</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+  <div class="glass rounded-xl px-6 py-4 flex items-center gap-3 shadow-xl animate-slide-in">
+    <i data-lucide="check-circle" class="w-5 h-5 text-green-400" id="toastIcon"></i>
+    <span class="text-sm text-white" id="toastMsg"></span>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentTab = 'home';
+let emailBound = false;
+let phoneBound = false;
+let adminLoggedIn = false;
+let phoneCountdown = 0;
+let emailCountdown = 0;
+let phoneTimer = null;
+let emailTimer = null;
+
+// ==================== DATA ====================
+const hypoCases = [
+  {
+    text: 'circRNA在结直肠癌中通过吸附miR-456调控PTEN通路的机制研究',
+    title: 'circRNA在结直肠癌中的调控机制',
+    result: {
+      hypothesis: 'circRNA_00123通过充当ceRNA（竞争性内源RNA）吸附miR-456，解除miR-456对PTEN mRNA的靶向抑制，从而激活PTEN/AKT信号通路，抑制结直肠癌细胞的增殖、迁移和侵袭。',
+      points: [
+        'circRNA_00123在结直肠癌组织中表达显著上调',
+        'circRNA_00123直接结合miR-456，充当分子海绵',
+        'miR-456靶向抑制PTEN的3\'UTR',
+        'PTEN通过负调控PI3K/AKT通路抑制肿瘤进展',
+        'circRNA_00123/miR-456/PTEN轴在体内外的功能验证'
+      ],
+      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#38BDF8;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#FBBF24;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10B981;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#34D399;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EF4444;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F87171;stop-opacity:0.8"/></linearGradient>
+          <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#64748B"/></marker>
+          <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#EF4444"/></marker>
+          <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10B981"/></marker>
+        </defs>
+        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
+        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">circRNA_00123/miR-456/PTEN 调控轴机制图</text>
+        <!-- circRNA node -->
+        <ellipse cx="120" cy="200" rx="70" ry="40" fill="url(#g1)" opacity="0.9"/>
+        <text x="120" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">circRNA</text>
+        <text x="120" y="212" text-anchor="middle" fill="white" font-size="10">_00123</text>
+        <!-- miR-456 node -->
+        <ellipse cx="300" cy="120" rx="60" ry="35" fill="url(#g2)" opacity="0.9"/>
+        <text x="300" y="125" text-anchor="middle" fill="white" font-size="12" font-weight="600">miR-456</text>
+        <!-- PTEN node -->
+        <rect x="420" y="90" width="120" height="55" rx="10" fill="url(#g3)" opacity="0.9"/>
+        <text x="480" y="123" text-anchor="middle" fill="white" font-size="13" font-weight="600">PTEN</text>
+        <!-- PI3K/AKT -->
+        <rect x="420" y="220" width="120" height="55" rx="10" fill="url(#g4)" opacity="0.9"/>
+        <text x="480" y="245" text-anchor="middle" fill="white" font-size="11" font-weight="600">PI3K/AKT</text>
+        <text x="480" y="262" text-anchor="middle" fill="white" font-size="10">信号通路</text>
+        <!-- Tumor Progression -->
+        <rect x="420" y="330" width="120" height="45" rx="10" fill="#64748B" opacity="0.8"/>
+        <text x="480" y="357" text-anchor="middle" fill="white" font-size="10" font-weight="600">肿瘤进展</text>
+        <!-- Arrows -->
+        <line x1="185" y1="185" x2="245" y2="140" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="6,3"/>
+        <text x="200" y="155" fill="#94A3B8" font-size="9" transform="rotate(-20,200,155)">吸附 (sponge)</text>
+        <line x1="355" y1="120" x2="420" y2="115" stroke="#EF4444" stroke-width="2" marker-end="url(#arrowRed)"/>
+        <text x="375" y="108" fill="#F87171" font-size="9">抑制</text>
+        <line x1="480" y1="145" x2="480" y2="220" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+        <text x="495" y="185" fill="#34D399" font-size="9">负调控</text>
+        <line x1="480" y1="275" x2="480" y2="330" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="495" y="305" fill="#94A3B8" font-size="9">促进</text>
+        <!-- Legend -->
+        <rect x="30" y="340" width="200" height="45" rx="6" fill="#0A1628" opacity="0.8"/>
+        <line x1="45" y1="355" x2="75" y2="355" stroke="#EF4444" stroke-width="2"/>
+        <text x="80" y="359" fill="#94A3B8" font-size="9">抑制</text>
+        <line x1="120" y1="355" x2="150" y2="355" stroke="#10B981" stroke-width="2"/>
+        <text x="155" y="359" fill="#94A3B8" font-size="9">正调控</text>
+        <line x1="45" y1="375" x2="75" y2="375" stroke="#64748B" stroke-width="2" stroke-dasharray="6,3"/>
+        <text x="80" y="379" fill="#94A3B8" font-size="9">ceRNA吸附</text>
+      </svg>`
+    }
+  },
+  {
+    text: 'PD-1/PD-L1抑制剂在非小细胞肺癌中获得性耐药的分子机制研究',
+    title: 'PD-1/PD-L1抑制剂耐药机制',
+    result: {
+      hypothesis: '非小细胞肺癌患者在使用PD-1/PD-L1抑制剂后，通过JAK1/2突变导致IFN-gamma信号通路缺失，同时肿瘤细胞上调替代性免疫检查点TIM-3和LAG-3，形成多重免疫逃逸机制导致获得性耐药。',
+      points: [
+        'JAK1/2功能缺失突变导致IFN-gamma通路信号中断',
+        'B2M缺失突变导致MHC-I类分子表达降低',
+        '替代性免疫检查点TIM-3、LAG-3表达上调',
+        '肿瘤微环境中Treg细胞比例增加',
+        'WNT/beta-catenin通路激活导致T细胞排斥'
+      ],
+      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
+        <defs>
+          <linearGradient id="h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#A78BFA;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EC4899;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F472B6;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="h3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#38BDF8;stop-opacity:0.8"/></linearGradient>
+        </defs>
+        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
+        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">PD-1/PD-L1抑制剂获得性耐药机制</text>
+        <!-- T Cell -->
+        <ellipse cx="100" cy="200" rx="65" ry="45" fill="url(#h1)" opacity="0.9"/>
+        <text x="100" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">T Cell</text>
+        <text x="100" y="212" text-anchor="middle" fill="white" font-size="9">(CD8+)</text>
+        <!-- PD-1 -->
+        <rect x="160" y="180" width="50" height="25" rx="5" fill="#F59E0B" opacity="0.9"/>
+        <text x="185" y="197" text-anchor="middle" fill="white" font-size="10" font-weight="600">PD-1</text>
+        <!-- Tumor Cell -->
+        <ellipse cx="380" cy="200" rx="80" ry="55" fill="url(#h2)" opacity="0.9"/>
+        <text x="380" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">肿瘤细胞</text>
+        <text x="380" y="212" text-anchor="middle" fill="white" font-size="9">(NSCLC)</text>
+        <!-- PD-L1 -->
+        <rect x="305" y="180" width="55" height="25" rx="5" fill="#F59E0B" opacity="0.9"/>
+        <text x="332" y="197" text-anchor="middle" fill="white" font-size="10" font-weight="600">PD-L1</text>
+        <!-- Resistance mechanisms -->
+        <rect x="490" y="80" width="90" height="40" rx="8" fill="#EF4444" opacity="0.8"/>
+        <text x="535" y="97" text-anchor="middle" fill="white" font-size="9" font-weight="600">JAK1/2</text>
+        <text x="535" y="112" text-anchor="middle" fill="white" font-size="9">突变</text>
+        <rect x="490" y="140" width="90" height="40" rx="8" fill="#EF4444" opacity="0.8"/>
+        <text x="535" y="157" text-anchor="middle" fill="white" font-size="9" font-weight="600">B2M缺失</text>
+        <text x="535" y="172" text-anchor="middle" fill="white" font-size="9">MHC-I降低</text>
+        <rect x="490" y="200" width="90" height="40" rx="8" fill="#F59E0B" opacity="0.8"/>
+        <text x="535" y="217" text-anchor="middle" fill="white" font-size="9" font-weight="600">TIM-3/LAG-3</text>
+        <text x="535" y="232" text-anchor="middle" fill="white" font-size="9">上调</text>
+        <rect x="490" y="260" width="90" height="40" rx="8" fill="#F59E0B" opacity="0.8"/>
+        <text x="535" y="277" text-anchor="middle" fill="white" font-size="9" font-weight="600">WNT/beta-cat</text>
+        <text x="535" y="292" text-anchor="middle" fill="white" font-size="9">激活</text>
+        <!-- Arrows -->
+        <line x1="210" y1="192" x2="305" y2="192" stroke="#F59E0B" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="257" y="185" text-anchor="middle" fill="#FBBF24" font-size="9">阻断失效</text>
+        <line x1="460" y1="200" x2="490" y2="220" stroke="#64748B" stroke-width="1.5"/>
+        <line x1="460" y1="200" x2="490" y2="160" stroke="#64748B" stroke-width="1.5"/>
+        <line x1="460" y1="200" x2="490" y2="100" stroke="#64748B" stroke-width="1.5"/>
+        <line x1="460" y1="200" x2="490" y2="280" stroke="#64748B" stroke-width="1.5"/>
+        <!-- Bottom label -->
+        <rect x="150" y="330" width="300" height="40" rx="8" fill="#0A1628" opacity="0.8" stroke="#EF4444" stroke-width="1"/>
+        <text x="300" y="355" text-anchor="middle" fill="#F87171" font-size="11" font-weight="600">多重免疫逃逸 = 获得性耐药</text>
+      </svg>`
+    }
+  },
+  {
+    text: '肠道菌群通过肠脑轴调控抑郁症的分子机制研究',
+    title: '肠道菌群-肠脑轴-抑郁症',
+    result: {
+      hypothesis: '肠道菌群失调导致短链脂肪酸（SCFA）产生减少，肠屏障通透性增加，系统性炎症因子（IL-6、TNF-alpha）入血通过血脑屏障，激活小胶质细胞导致神经炎症，同时5-HT合成减少和HPA轴过度激活共同参与抑郁症的发病机制。',
+      points: [
+        '肠道菌群失调导致SCFA产生减少',
+        '肠屏障功能受损（"leaky gut"）',
+        '系统性炎症因子通过血脑屏障',
+        '小胶质细胞激活导致神经炎症',
+        '5-HT合成减少与HPA轴过度激活',
+        '菌群-肠-脑轴的多层次调控网络'
+      ],
+      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
+        <defs>
+          <linearGradient id="m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10B981;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#34D399;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#FBBF24;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="m3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#A78BFA;stop-opacity:0.8"/></linearGradient>
+          <linearGradient id="m4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EF4444;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F87171;stop-opacity:0.8"/></linearGradient>
+        </defs>
+        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
+        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">肠道菌群-肠-脑轴调控抑郁症机制</text>
+        <!-- Gut -->
+        <ellipse cx="100" cy="200" rx="70" ry="50" fill="url(#m1)" opacity="0.9"/>
+        <text x="100" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">肠道菌群</text>
+        <text x="100" y="212" text-anchor="middle" fill="white" font-size="9">(Gut Microbiota)</text>
+        <!-- Gut barrier -->
+        <rect x="200" y="170" width="80" height="60" rx="10" fill="url(#m2)" opacity="0.9"/>
+        <text x="240" y="195" text-anchor="middle" fill="white" font-size="10" font-weight="600">肠屏障</text>
+        <text x="240" y="210" text-anchor="middle" fill="white" font-size="8">Leaky Gut</text>
+        <!-- Blood/Immune -->
+        <ellipse cx="370" cy="200" rx="60" ry="40" fill="url(#m4)" opacity="0.8"/>
+        <text x="370" y="195" text-anchor="middle" fill="white" font-size="10" font-weight="600">IL-6/TNF-a</text>
+        <text x="370" y="210" text-anchor="middle" fill="white" font-size="9">系统性炎症</text>
+        <!-- Brain -->
+        <ellipse cx="520" cy="140" rx="60" ry="45" fill="url(#m3)" opacity="0.9"/>
+        <text x="520" y="135" text-anchor="middle" fill="white" font-size="11" font-weight="600">中枢神经</text>
+        <text x="520" y="152" text-anchor="middle" fill="white" font-size="9">(CNS)</text>
+        <!-- Depression -->
+        <rect x="475" y="260" width="90" height="40" rx="8" fill="#64748B" opacity="0.9"/>
+        <text x="520" y="285" text-anchor="middle" fill="white" font-size="11" font-weight="600">抑郁症</text>
+        <!-- Vagus nerve -->
+        <path d="M 170 170 Q 300 60 460 120" stroke="#38BDF8" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+        <text x="300" y="80" text-anchor="middle" fill="#38BDF8" font-size="9">迷走神经</text>
+        <!-- SCFA -->
+        <text x="160" y="160" fill="#34D399" font-size="9">SCFA</text>
+        <line x1="140" y1="165" x2="200" y2="185" stroke="#34D399" stroke-width="1.5"/>
+        <!-- 5-HT -->
+        <text x="160" y="250" fill="#FBBF24" font-size="9">5-HT</text>
+        <line x1="140" y1="245" x2="200" y2="215" stroke="#FBBF24" stroke-width="1.5"/>
+        <!-- Arrows -->
+        <line x1="280" y1="200" x2="310" y2="200" stroke="#64748B" stroke-width="2"/>
+        <line x1="430" y1="200" x2="460" y2="160" stroke="#64748B" stroke-width="2"/>
+        <line x1="520" y1="185" x2="520" y2="260" stroke="#64748B" stroke-width="2"/>
+        <!-- HPA axis label -->
+        <text x="520" y="235" text-anchor="middle" fill="#A78BFA" font-size="9">HPA轴激活</text>
+      </svg>`
+    }
+  }
+];
+
+const roadCases = [
+  {
+    text: '研究circRNA_00123在结直肠癌中的功能与机制',
+    phases: [
+      { name: '第一阶段：生物信息学筛选', duration: '第1-3月', items: ['TCGA/GEO数据库差异表达分析', 'circRNA-miRNA网络构建', '靶基因GO/KEGG富集分析', '候选circRNA筛选与验证'] },
+      { name: '第二阶段：体外功能验证', duration: '第4-8月', items: ['circRNA表达验证（qRT-PCR）', '细胞增殖实验（CCK-8/EdU）', '细胞凋亡检测（流式细胞术）', '迁移侵袭实验（Transwell）'] },
+      { name: '第三阶段：机制研究', duration: '第9-14月', items: ['ceRNA网络验证（双荧光素酶）', 'RNA pull-down + RIP实验', 'Western Blot验证通路蛋白', '挽救实验（Rescue）'] },
+      { name: '第四阶段：体内验证', duration: '第15-20月', items: ['裸鼠皮下成瘤模型', 'circRNA过表达/敲低', '免疫组化（IHC）分析', '肿瘤生长曲线与统计'] },
+      { name: '第五阶段：临床意义', duration: '第21-24月', items: ['临床样本验证', '生存分析（Kaplan-Meier）', '诊断标志物评估（ROC曲线）', '论文撰写与投稿'] }
+    ]
+  },
+  {
+    text: '新型PD-1抑制剂的临床前药效学与安全性评价',
+    phases: [
+      { name: '第一阶段：分子设计与筛选', duration: '第1-4月', items: ['抗体人源化设计', '亲和力测定（SPR/BLI）', '体外结合实验', '先导化合物优化'] },
+      { name: '第二阶段：体外药效学', duration: '第5-9月', items: ['T细胞激活实验', '肿瘤细胞共培养杀伤实验', '细胞因子释放检测', '免疫检查点竞争结合'] },
+      { name: '第三阶段：体内药效学', duration: '第10-16月', items: ['人源化小鼠模型建立', '肿瘤生长抑制实验', '免疫微环境分析（流式）', '药代动力学研究'] },
+      { name: '第四阶段：安全性评价', duration: '第17-22月', items: ['GLP毒理学研究', '组织交叉反应', 'Cytokine Release Syndrome评估', 'IND申报材料准备'] }
+    ]
+  },
+  {
+    text: '单细胞RNA测序解析肝癌肿瘤微环境的异质性',
+    phases: [
+      { name: '第一阶段：样本准备与测序', duration: '第1-3月', items: ['临床样本收集（肝癌+配对正常）', '单细胞悬液制备与质控', '10x Genomics scRNA-seq建库', '高通量测序与数据质控'] },
+      { name: '第二阶段：生信分析', duration: '第4-7月', items: ['CellRanger数据预处理', 'Seurat降维聚类与注释', '差异基因与通路分析', '细胞通讯分析（CellChat）'] },
+      { name: '第三阶段：功能验证', duration: '第8-13月', items: ['关键亚群标志物验证（IHC/IF）', 'TME免疫细胞功能实验', '细胞共培养功能验证', '空间转录组学验证'] },
+      { name: '第四阶段：转化研究', duration: '第14-18月', items: ['预后模型构建', '免疫治疗响应预测', '潜在靶点筛选', '论文撰写与投稿'] }
+    ]
+  }
+];
+
+const savedPrompts = [
+  { name: '肿瘤微环境机制图', desc: 'PD-1/PD-L1免疫检查点通路在肿瘤微环境中的作用机制...', prompt: 'A professional scientific illustration showing the PD-1/PD-L1 immune checkpoint pathway in tumor microenvironment, with T cells, cancer cells, and antigen presenting cells, clean medical illustration style, high detail', uses: 12 },
+  { name: '信号通路示意图', desc: 'PI3K/AKT/mTOR信号通路的级联激活与调控网络...', prompt: 'Scientific diagram of PI3K/AKT/mTOR signaling pathway cascade, showing molecular interactions, phosphorylation events, and downstream targets, clean vector style, publication quality', uses: 8 },
+  { name: '实验流程图', desc: 'Western Blot实验操作流程与关键步骤...', prompt: 'Step-by-step Western Blot experimental procedure flowchart, including sample preparation, gel electrophoresis, transfer, blocking, antibody incubation, and detection, clean scientific style', uses: 5 }
+];
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tab) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  // Show target
+  const target = document.getElementById('tab-' + tab);
+  if (target) target.classList.add('active');
+  currentTab = tab;
+
+  // Toggle navbar visibility
+  const navbar = document.getElementById('mainNavbar');
+  if (tab === 'admin') {
+    navbar.style.display = 'none';
+  } else {
+    navbar.style.display = 'block';
+  }
+
+  // Update nav link highlighting
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('text-teal-400', 'bg-teal-500/10');
+    link.classList.add('text-gray-300');
+    if (link.dataset.tab === tab) {
+      link.classList.add('text-teal-400', 'bg-teal-500/10');
+      link.classList.remove('text-gray-300');
+    }
+  });
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Re-init icons
+  setTimeout(() => lucide.createIcons(), 50);
+
+  // Animate stats on home tab
+  if (tab === 'home') animateStats();
+}
+
+// ==================== MOBILE MENU ====================
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobileMenu');
+  const overlay = document.getElementById('mobileOverlay');
+  menu.classList.toggle('open');
+  overlay.classList.toggle('hidden');
+}
+
+// ==================== COLLAPSIBLE ====================
+function toggleCollapsible(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  el.classList.toggle('open');
+  if (icon) icon.style.transform = el.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+// ==================== TOAST ====================
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  const toastIcon = document.getElementById('toastIcon');
+  toastMsg.textContent = msg;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+// ==================== HYPOTHESIS ====================
+function loadHypoCase(idx) {
+  const c = hypoCases[idx];
+  document.getElementById('hypoInput').value = c.text;
+  showHypoResult(c.result);
+}
+
+function generateHypothesis() {
+  const input = document.getElementById('hypoInput').value.trim();
+  if (!input) { showToast('请输入研究假说', 'warning'); return; }
+  const resultEl = document.getElementById('hypoResult');
+  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成假说图...</p></div>`;
+  setTimeout(() => {
+    showHypoResult(hypoCases[0].result);
+    showToast('假说图生成完成');
+  }, 2000);
+}
+
+function showHypoResult(result) {
+  const el = document.getElementById('hypoResult');
+  el.innerHTML = `
+    <div class="animate-fade-in space-y-6">
+      <div>
+        <h3 class="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2"><i data-lucide="lightbulb" class="w-4 h-4"></i> 研究假说</h3>
+        <p class="text-sm text-gray-300 leading-relaxed">${result.hypothesis}</p>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2"><i data-lucide="list-checks" class="w-4 h-4"></i> 关键要点</h3>
+        <ul class="space-y-2">
+          ${result.points.map(p => `<li class="flex items-start gap-2 text-sm text-gray-300"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0"></i>${p}</li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> 机制图</h3>
+        <div class="rounded-xl overflow-hidden border border-white/10">${result.svg}</div>
+      </div>
+      <button onclick="showToast('图片已保存')" class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i> 下载图片
+      </button>
+    </div>`;
+  setTimeout(() => lucide.createIcons(), 50);
+}
+
+// ==================== ROADMAP ====================
+function loadRoadCase(idx) {
+  const c = roadCases[idx];
+  document.getElementById('roadInput').value = c.text;
+  showRoadResult(c.phases);
+}
+
+function generateRoadmap() {
+  const input = document.getElementById('roadInput').value.trim();
+  if (!input) { showToast('请输入研究内容', 'warning'); return; }
+  const resultEl = document.getElementById('roadResult');
+  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在规划技术路线...</p></div>`;
+  setTimeout(() => {
+    showRoadResult(roadCases[0].phases);
+    showToast('技术路线生成完成');
+  }, 2000);
+}
+
+function showRoadResult(phases) {
+  const colors = ['teal', 'amber', 'purple', 'rose', 'cyan'];
+  const el = document.getElementById('roadResult');
+  el.innerHTML = `
+    <div class="animate-fade-in">
+      <h3 class="text-sm font-semibold text-white mb-6 flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-amber-400"></i> 研究技术路线</h3>
+      <div class="relative pl-12">
+        <div class="timeline-line"></div>
+        ${phases.map((p, i) => `
+          <div class="relative mb-8 last:mb-0 animate-fade-in" style="animation-delay:${i*0.15}s">
+            <div class="timeline-dot" style="background:${colors[i%5]==='teal'?'#0EA5E9':colors[i%5]==='amber'?'#F59E0B':colors[i%5]==='purple'?'#8B5CF6':colors[i%5]==='rose'?'#F43F5E':'#06B6D4'}"></div>
+            <div class="glass-light rounded-xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-semibold text-white">${p.name}</h4>
+                <span class="text-xs text-gray-400">${p.duration}</span>
+              </div>
+              <ul class="space-y-1.5">
+                ${p.items.map(item => `<li class="text-xs text-gray-300 flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3 text-gray-500"></i>${item}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button onclick="showToast('路线图已保存')" class="mt-6 w-full py-2.5 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i> 下载路线图
+      </button>
+    </div>`;
+  setTimeout(() => lucide.createIcons(), 50);
+}
+
+// ==================== CUSTOM PROMPT ====================
+function loadSavedPrompt(idx) {
+  const p = savedPrompts[idx];
+  document.getElementById('customPrompt').value = p.prompt;
+  showToast('已加载提示词: ' + p.name);
+}
+
+function deleteSavedPrompt(idx) {
+  savedPrompts.splice(idx, 1);
+  renderSavedPrompts();
+  showToast('提示词已删除');
+}
+
+function renderSavedPrompts() {
+  const el = document.getElementById('savedPromptsList');
+  if (savedPrompts.length === 0) {
+    el.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">暂无保存的提示词</p>';
+    return;
+  }
+  el.innerHTML = savedPrompts.map((p, i) => `
+    <div class="glass-light rounded-xl p-4 card-hover cursor-pointer" onclick="loadSavedPrompt(${i})">
+      <div class="flex items-start justify-between">
+        <div>
+          <h4 class="text-sm font-semibold text-white mb-1">${p.name}</h4>
+          <p class="text-xs text-gray-400">${p.desc}</p>
+        </div>
+        <button onclick="event.stopPropagation();deleteSavedPrompt(${i})" class="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </div>
+      <div class="mt-2 flex items-center gap-1 text-xs text-gray-500"><i data-lucide="repeat" class="w-3 h-3"></i> 使用 ${p.uses} 次</div>
+    </div>`).join('');
+  setTimeout(() => lucide.createIcons(), 50);
+}
+
+function saveCustomPrompt() {
+  const name = document.getElementById('promptName').value.trim();
+  const prompt = document.getElementById('customPrompt').value.trim();
+  if (!name || !prompt) { showToast('请填写名称和提示词'); return; }
+  savedPrompts.unshift({ name, desc: prompt.substring(0, 50) + '...', prompt, uses: 0 });
+  renderSavedPrompts();
+  document.getElementById('promptName').value = '';
+  showToast('提示词已保存');
+}
+
+function generateCustomImage() {
+  const prompt = document.getElementById('customPrompt').value.trim();
+  if (!prompt) { showToast('请输入提示词'); return; }
+  const el = document.getElementById('customResult');
+  const size = document.getElementById('imgSize').value;
+  const [w, h] = size.split('x');
+  const aspect = w > h ? 'landscape' : h > w ? 'portrait' : 'square';
+  el.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成图片...</p></div>`;
+  setTimeout(() => {
+    el.innerHTML = `
+      <div class="animate-fade-in">
+        <div class="rounded-xl overflow-hidden border border-white/10 mb-4">
+          <div class="relative w-full ${aspect==='landscape'?'aspect-video':aspect==='portrait'?'aspect-[9/16]':'aspect-square'} bg-gradient-to-br from-purple-600/30 via-teal-500/20 to-amber-500/30 flex items-center justify-center">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-navy-800/60 to-teal-900/40"></div>
+            <div class="relative text-center">
+              <i data-lucide="image" class="w-16 h-16 mx-auto mb-4 text-white/30"></i>
+              <p class="text-white/50 text-sm font-medium">AI Generated Image</p>
+              <p class="text-white/30 text-xs mt-1">${size} - HD Quality</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="showToast('图片已保存')" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> 下载
+          </button>
+          <button onclick="generateCustomImage()" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成
+          </button>
+        </div>
+      </div>`;
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('图片生成完成');
+  }, 2500);
+}
+
+// ==================== MEMBERSHIP ====================
+function startCountdown(btnId, seconds, type) {
+  const btn = document.getElementById(btnId);
+  let remaining = seconds;
+  btn.disabled = true;
+  btn.classList.add('opacity-50', 'cursor-not-allowed');
+  const timer = setInterval(() => {
+    remaining--;
+    btn.textContent = `${remaining}s`;
+    if (remaining <= 0) {
+      clearInterval(timer);
+      btn.textContent = '获取验证码';
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }, 1000);
+}
+
+function sendPhoneCode() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  if (!phone || phone.length < 11) { showToast('请输入有效手机号'); return; }
+  startCountdown('phoneCodeBtn', 60);
+  showToast('验证码已发送');
+}
+
+function sendEmailCode() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email || !email.includes('@')) { showToast('请输入有效邮箱'); return; }
+  startCountdown('emailCodeBtn', 60);
+  showToast('验证码已发送');
+}
+
+function bindPhone() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  const code = document.getElementById('phoneCodeInput').value.trim();
+  if (!phone || !code) { showToast('请填写手机号和验证码'); return; }
+  phoneBound = true;
+  document.getElementById('phoneStatus').textContent = '已绑定';
+  document.getElementById('phoneStatus').className = 'px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs';
+  showToast('手机号绑定成功');
+}
+
+function bindEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  const code = document.getElementById('emailCodeInput').value.trim();
+  if (!email || !code) { showToast('请填写邮箱和验证码'); return; }
+  emailBound = true;
+  document.getElementById('emailStatus').textContent = '已绑定';
+  document.getElementById('emailStatus').className = 'px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs';
+  document.getElementById('passwordSection').classList.remove('hidden');
+  showToast('邮箱绑定成功');
+  setTimeout(() => lucide.createIcons(), 50);
+}
+
+function changePassword() {
+  const old = document.getElementById('oldPwd').value;
+  const newP = document.getElementById('newPwd').value;
+  const confirm = document.getElementById('confirmPwd').value;
+  if (!old || !newP || !confirm) { showToast('请填写所有密码字段'); return; }
+  if (newP !== confirm) { showToast('两次密码输入不一致'); return; }
+  if (newP.length < 6) { showToast('密码长度至少6位'); return; }
+  showToast('密码修改成功');
+  document.getElementById('oldPwd').value = '';
+  document.getElementById('newPwd').value = '';
+  document.getElementById('confirmPwd').value = '';
+}
+
+// ==================== ADMIN ====================
+function adminLogin() {
+  document.getElementById('adminGate').innerHTML = `
+    <div class="flex flex-col items-center">
+      <div class="spinner mb-4"></div>
+      <p class="text-gray-400 text-sm">验证中...</p>
+    </div>`;
+  setTimeout(() => {
+    adminLoggedIn = true;
+    document.getElementById('adminGate').classList.add('hidden');
+    document.getElementById('adminDashboard').classList.remove('hidden');
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('管理员登录成功');
+  }, 1500);
+}
+
+function switchAdminView(view) {
+  document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
+  document.getElementById('adminView-' + view).classList.remove('hidden');
+  document.querySelectorAll('.admin-sidebar-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.view === view) item.classList.add('active');
+  });
+}
+
+// ==================== STATS ANIMATION ====================
+function animateStats() {
+  document.querySelectorAll('.stat-number').forEach(el => {
+    const target = parseFloat(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const decimal = parseInt(el.dataset.decimal) || 0;
+    const duration = 2000;
+    const start = performance.now();
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = target * eased;
+      if (decimal > 0) {
+        el.textContent = current.toFixed(decimal) + suffix;
+      } else {
+        el.textContent = Math.floor(current).toLocaleString() + suffix;
+      }
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  switchTab('home');
+});
+</script>
+</body>
+</html>
