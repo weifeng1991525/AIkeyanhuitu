@@ -1049,53 +1049,7 @@ const hypoCases = [
         'PTEN通过负调控PI3K/AKT通路抑制肿瘤进展',
         'circRNA_00123/miR-456/PTEN轴在体内外的功能验证'
       ],
-      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
-        <defs>
-          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#38BDF8;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#FBBF24;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10B981;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#34D399;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EF4444;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F87171;stop-opacity:0.8"/></linearGradient>
-          <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#64748B"/></marker>
-          <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#EF4444"/></marker>
-          <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10B981"/></marker>
-        </defs>
-        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
-        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">circRNA_00123/miR-456/PTEN 调控轴机制图</text>
-        <!-- circRNA node -->
-        <ellipse cx="120" cy="200" rx="70" ry="40" fill="url(#g1)" opacity="0.9"/>
-        <text x="120" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">circRNA</text>
-        <text x="120" y="212" text-anchor="middle" fill="white" font-size="10">_00123</text>
-        <!-- miR-456 node -->
-        <ellipse cx="300" cy="120" rx="60" ry="35" fill="url(#g2)" opacity="0.9"/>
-        <text x="300" y="125" text-anchor="middle" fill="white" font-size="12" font-weight="600">miR-456</text>
-        <!-- PTEN node -->
-        <rect x="420" y="90" width="120" height="55" rx="10" fill="url(#g3)" opacity="0.9"/>
-        <text x="480" y="123" text-anchor="middle" fill="white" font-size="13" font-weight="600">PTEN</text>
-        <!-- PI3K/AKT -->
-        <rect x="420" y="220" width="120" height="55" rx="10" fill="url(#g4)" opacity="0.9"/>
-        <text x="480" y="245" text-anchor="middle" fill="white" font-size="11" font-weight="600">PI3K/AKT</text>
-        <text x="480" y="262" text-anchor="middle" fill="white" font-size="10">信号通路</text>
-        <!-- Tumor Progression -->
-        <rect x="420" y="330" width="120" height="45" rx="10" fill="#64748B" opacity="0.8"/>
-        <text x="480" y="357" text-anchor="middle" fill="white" font-size="10" font-weight="600">肿瘤进展</text>
-        <!-- Arrows -->
-        <line x1="185" y1="185" x2="245" y2="140" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="6,3"/>
-        <text x="200" y="155" fill="#94A3B8" font-size="9" transform="rotate(-20,200,155)">吸附 (sponge)</text>
-        <line x1="355" y1="120" x2="420" y2="115" stroke="#EF4444" stroke-width="2" marker-end="url(#arrowRed)"/>
-        <text x="375" y="108" fill="#F87171" font-size="9">抑制</text>
-        <line x1="480" y1="145" x2="480" y2="220" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
-        <text x="495" y="185" fill="#34D399" font-size="9">负调控</text>
-        <line x1="480" y1="275" x2="480" y2="330" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
-        <text x="495" y="305" fill="#94A3B8" font-size="9">促进</text>
-        <!-- Legend -->
-        <rect x="30" y="340" width="200" height="45" rx="6" fill="#0A1628" opacity="0.8"/>
-        <line x1="45" y1="355" x2="75" y2="355" stroke="#EF4444" stroke-width="2"/>
-        <text x="80" y="359" fill="#94A3B8" font-size="9">抑制</text>
-        <line x1="120" y1="355" x2="150" y2="355" stroke="#10B981" stroke-width="2"/>
-        <text x="155" y="359" fill="#94A3B8" font-size="9">正调控</text>
-        <line x1="45" y1="375" x2="75" y2="375" stroke="#64748B" stroke-width="2" stroke-dasharray="6,3"/>
-        <text x="80" y="379" fill="#94A3B8" font-size="9">ceRNA吸附</text>
-      </svg>`
+      img: `<img src="https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/hypothesis-circRNA.png" alt="circRNA假说图" class="w-full rounded-lg border border-white/10" />`
     }
   },
   {
@@ -1110,52 +1064,7 @@ const hypoCases = [
         '肿瘤微环境中Treg细胞比例增加',
         'WNT/beta-catenin通路激活导致T细胞排斥'
       ],
-      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
-        <defs>
-          <linearGradient id="h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#A78BFA;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EC4899;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F472B6;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="h3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#38BDF8;stop-opacity:0.8"/></linearGradient>
-        </defs>
-        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
-        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">PD-1/PD-L1抑制剂获得性耐药机制</text>
-        <!-- T Cell -->
-        <ellipse cx="100" cy="200" rx="65" ry="45" fill="url(#h1)" opacity="0.9"/>
-        <text x="100" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">T Cell</text>
-        <text x="100" y="212" text-anchor="middle" fill="white" font-size="9">(CD8+)</text>
-        <!-- PD-1 -->
-        <rect x="160" y="180" width="50" height="25" rx="5" fill="#F59E0B" opacity="0.9"/>
-        <text x="185" y="197" text-anchor="middle" fill="white" font-size="10" font-weight="600">PD-1</text>
-        <!-- Tumor Cell -->
-        <ellipse cx="380" cy="200" rx="80" ry="55" fill="url(#h2)" opacity="0.9"/>
-        <text x="380" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">肿瘤细胞</text>
-        <text x="380" y="212" text-anchor="middle" fill="white" font-size="9">(NSCLC)</text>
-        <!-- PD-L1 -->
-        <rect x="305" y="180" width="55" height="25" rx="5" fill="#F59E0B" opacity="0.9"/>
-        <text x="332" y="197" text-anchor="middle" fill="white" font-size="10" font-weight="600">PD-L1</text>
-        <!-- Resistance mechanisms -->
-        <rect x="490" y="80" width="90" height="40" rx="8" fill="#EF4444" opacity="0.8"/>
-        <text x="535" y="97" text-anchor="middle" fill="white" font-size="9" font-weight="600">JAK1/2</text>
-        <text x="535" y="112" text-anchor="middle" fill="white" font-size="9">突变</text>
-        <rect x="490" y="140" width="90" height="40" rx="8" fill="#EF4444" opacity="0.8"/>
-        <text x="535" y="157" text-anchor="middle" fill="white" font-size="9" font-weight="600">B2M缺失</text>
-        <text x="535" y="172" text-anchor="middle" fill="white" font-size="9">MHC-I降低</text>
-        <rect x="490" y="200" width="90" height="40" rx="8" fill="#F59E0B" opacity="0.8"/>
-        <text x="535" y="217" text-anchor="middle" fill="white" font-size="9" font-weight="600">TIM-3/LAG-3</text>
-        <text x="535" y="232" text-anchor="middle" fill="white" font-size="9">上调</text>
-        <rect x="490" y="260" width="90" height="40" rx="8" fill="#F59E0B" opacity="0.8"/>
-        <text x="535" y="277" text-anchor="middle" fill="white" font-size="9" font-weight="600">WNT/beta-cat</text>
-        <text x="535" y="292" text-anchor="middle" fill="white" font-size="9">激活</text>
-        <!-- Arrows -->
-        <line x1="210" y1="192" x2="305" y2="192" stroke="#F59E0B" stroke-width="2" stroke-dasharray="5,3"/>
-        <text x="257" y="185" text-anchor="middle" fill="#FBBF24" font-size="9">阻断失效</text>
-        <line x1="460" y1="200" x2="490" y2="220" stroke="#64748B" stroke-width="1.5"/>
-        <line x1="460" y1="200" x2="490" y2="160" stroke="#64748B" stroke-width="1.5"/>
-        <line x1="460" y1="200" x2="490" y2="100" stroke="#64748B" stroke-width="1.5"/>
-        <line x1="460" y1="200" x2="490" y2="280" stroke="#64748B" stroke-width="1.5"/>
-        <!-- Bottom label -->
-        <rect x="150" y="330" width="300" height="40" rx="8" fill="#0A1628" opacity="0.8" stroke="#EF4444" stroke-width="1"/>
-        <text x="300" y="355" text-anchor="middle" fill="#F87171" font-size="11" font-weight="600">多重免疫逃逸 = 获得性耐药</text>
-      </svg>`
+      img: `<img src="https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/hypothesis-pdl1.png" alt="PD-L1耐药机制假说图" class="w-full rounded-lg border border-white/10" />`
     }
   },
   {
@@ -1171,50 +1080,7 @@ const hypoCases = [
         '5-HT合成减少与HPA轴过度激活',
         '菌群-肠-脑轴的多层次调控网络'
       ],
-      svg: `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" class="w-full">
-        <defs>
-          <linearGradient id="m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10B981;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#34D399;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#FBBF24;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="m3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#A78BFA;stop-opacity:0.8"/></linearGradient>
-          <linearGradient id="m4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#EF4444;stop-opacity:0.8"/><stop offset="100%" style="stop-color:#F87171;stop-opacity:0.8"/></linearGradient>
-        </defs>
-        <rect width="600" height="400" fill="#0F1F3A" rx="12"/>
-        <text x="300" y="30" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="600">肠道菌群-肠-脑轴调控抑郁症机制</text>
-        <!-- Gut -->
-        <ellipse cx="100" cy="200" rx="70" ry="50" fill="url(#m1)" opacity="0.9"/>
-        <text x="100" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="600">肠道菌群</text>
-        <text x="100" y="212" text-anchor="middle" fill="white" font-size="9">(Gut Microbiota)</text>
-        <!-- Gut barrier -->
-        <rect x="200" y="170" width="80" height="60" rx="10" fill="url(#m2)" opacity="0.9"/>
-        <text x="240" y="195" text-anchor="middle" fill="white" font-size="10" font-weight="600">肠屏障</text>
-        <text x="240" y="210" text-anchor="middle" fill="white" font-size="8">Leaky Gut</text>
-        <!-- Blood/Immune -->
-        <ellipse cx="370" cy="200" rx="60" ry="40" fill="url(#m4)" opacity="0.8"/>
-        <text x="370" y="195" text-anchor="middle" fill="white" font-size="10" font-weight="600">IL-6/TNF-a</text>
-        <text x="370" y="210" text-anchor="middle" fill="white" font-size="9">系统性炎症</text>
-        <!-- Brain -->
-        <ellipse cx="520" cy="140" rx="60" ry="45" fill="url(#m3)" opacity="0.9"/>
-        <text x="520" y="135" text-anchor="middle" fill="white" font-size="11" font-weight="600">中枢神经</text>
-        <text x="520" y="152" text-anchor="middle" fill="white" font-size="9">(CNS)</text>
-        <!-- Depression -->
-        <rect x="475" y="260" width="90" height="40" rx="8" fill="#64748B" opacity="0.9"/>
-        <text x="520" y="285" text-anchor="middle" fill="white" font-size="11" font-weight="600">抑郁症</text>
-        <!-- Vagus nerve -->
-        <path d="M 170 170 Q 300 60 460 120" stroke="#38BDF8" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
-        <text x="300" y="80" text-anchor="middle" fill="#38BDF8" font-size="9">迷走神经</text>
-        <!-- SCFA -->
-        <text x="160" y="160" fill="#34D399" font-size="9">SCFA</text>
-        <line x1="140" y1="165" x2="200" y2="185" stroke="#34D399" stroke-width="1.5"/>
-        <!-- 5-HT -->
-        <text x="160" y="250" fill="#FBBF24" font-size="9">5-HT</text>
-        <line x1="140" y1="245" x2="200" y2="215" stroke="#FBBF24" stroke-width="1.5"/>
-        <!-- Arrows -->
-        <line x1="280" y1="200" x2="310" y2="200" stroke="#64748B" stroke-width="2"/>
-        <line x1="430" y1="200" x2="460" y2="160" stroke="#64748B" stroke-width="2"/>
-        <line x1="520" y1="185" x2="520" y2="260" stroke="#64748B" stroke-width="2"/>
-        <!-- HPA axis label -->
-        <text x="520" y="235" text-anchor="middle" fill="#A78BFA" font-size="9">HPA轴激活</text>
-      </svg>`
+      img: `<img src="https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/hypothesis-gutbrain.png" alt="肠脑轴假说图" class="w-full rounded-lg border border-white/10" />`
     }
   }
 ];
@@ -1222,6 +1088,7 @@ const hypoCases = [
 const roadCases = [
   {
     text: '研究circRNA_00123在结直肠癌中的功能与机制',
+    img: 'https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/roadmap-circRNA.png',
     phases: [
       { name: '第一阶段：生物信息学筛选', duration: '第1-3月', items: ['TCGA/GEO数据库差异表达分析', 'circRNA-miRNA网络构建', '靶基因GO/KEGG富集分析', '候选circRNA筛选与验证'] },
       { name: '第二阶段：体外功能验证', duration: '第4-8月', items: ['circRNA表达验证（qRT-PCR）', '细胞增殖实验（CCK-8/EdU）', '细胞凋亡检测（流式细胞术）', '迁移侵袭实验（Transwell）'] },
@@ -1232,6 +1099,7 @@ const roadCases = [
   },
   {
     text: '新型PD-1抑制剂的临床前药效学与安全性评价',
+    img: 'https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/roadmap-pd1.png',
     phases: [
       { name: '第一阶段：分子设计与筛选', duration: '第1-4月', items: ['抗体人源化设计', '亲和力测定（SPR/BLI）', '体外结合实验', '先导化合物优化'] },
       { name: '第二阶段：体外药效学', duration: '第5-9月', items: ['T细胞激活实验', '肿瘤细胞共培养杀伤实验', '细胞因子释放检测', '免疫检查点竞争结合'] },
@@ -1241,6 +1109,7 @@ const roadCases = [
   },
   {
     text: '单细胞RNA测序解析肝癌肿瘤微环境的异质性',
+    img: 'https://raw.githubusercontent.com/weifeng1991525/AIkeyanhuitu/main/public/images/cases/roadmap-singlecell.png',
     phases: [
       { name: '第一阶段：样本准备与测序', duration: '第1-3月', items: ['临床样本收集（肝癌+配对正常）', '单细胞悬液制备与质控', '10x Genomics scRNA-seq建库', '高通量测序与数据质控'] },
       { name: '第二阶段：生信分析', duration: '第4-7月', items: ['CellRanger数据预处理', 'Seurat降维聚类与注释', '差异基因与通路分析', '细胞通讯分析（CellChat）'] },
@@ -1353,7 +1222,7 @@ function showHypoResult(result) {
       </div>
       <div>
         <h3 class="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> 机制图</h3>
-        <div class="rounded-xl overflow-hidden border border-white/10">${result.svg}</div>
+        <div class="rounded-xl overflow-hidden border border-white/10">${result.img}</div>
       </div>
       <button onclick="showToast('图片已保存')" class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2">
         <i data-lucide="download" class="w-4 h-4"></i> 下载图片
@@ -1366,7 +1235,7 @@ function showHypoResult(result) {
 function loadRoadCase(idx) {
   const c = roadCases[idx];
   document.getElementById('roadInput').value = c.text;
-  showRoadResult(c.phases);
+  showRoadResult(c.phases, c.img, c.text);
 }
 
 function generateRoadmap() {
@@ -1375,16 +1244,18 @@ function generateRoadmap() {
   const resultEl = document.getElementById('roadResult');
   resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在规划技术路线...</p></div>`;
   setTimeout(() => {
-    showRoadResult(roadCases[0].phases);
+    showRoadResult(roadCases[0].phases, roadCases[0].img, roadCases[0].text);
     showToast('技术路线生成完成');
   }, 2000);
 }
 
-function showRoadResult(phases) {
+function showRoadResult(phases, img, title) {
   const colors = ['teal', 'amber', 'purple', 'rose', 'cyan'];
   const el = document.getElementById('roadResult');
+  const imgHtml = img ? `<img src="${img}" alt="${title || '路线图'}" class="w-full rounded-lg border border-white/10 mb-4" />` : '';
   el.innerHTML = `
     <div class="animate-fade-in">
+      ${imgHtml}
       <h3 class="text-sm font-semibold text-white mb-6 flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-amber-400"></i> 研究技术路线</h3>
       <div class="relative pl-12">
         <div class="timeline-line"></div>
