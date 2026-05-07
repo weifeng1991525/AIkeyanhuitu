@@ -1926,13 +1926,61 @@ function loadScript(src) {
   });
 }
 
-async function loadDocxLib() {
-  await loadScript('https://unpkg.com/docx@8.2.4/build/index.umd.min.js');
-  // docx UMD exposes as window.docx
-  if (!window.docx && !window.Docx) {
-    throw new Error('docx库加载失败，请刷新页面重试');
-  }
-  return window.docx || window.Docx;
+// 轻量级Word生成 - 使用HTML模板+Blob方式，避免大库加载
+function generateWordBlob(htmlContent, filename) {
+  // 构建完整HTML文档，兼容Word打开
+  const fullHtml = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name=ProgId content=Word.Document>
+<title>${filename}</title>
+<style>
+/* 页面设置 */
+@page {
+  size: 21cm 29.7cm;
+  margin: 2.54cm 3.17cm 2.54cm 3.17cm;
+}
+body {
+  font-family: "宋体", "SimSun", "Times New Roman", serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000000;
+}
+p {
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
+.bold {
+  font-weight: bold;
+}
+/* 1.5倍行距 */
+.content {
+  line-height: 360%;
+  mso-line-height-rule: exactly;
+}
+</style>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+  
+  const blob = new Blob(['\ufeff' + fullHtml], { 
+    type: 'application/msword;charset=utf-8' 
+  });
+  return blob;
+}
+
+function downloadBlob(blob, filename) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }
 
 // ==================== MEMBERSHIP ====================
@@ -2842,37 +2890,17 @@ async function generateBudget() {
     paras.push({ text: '如有其他来源资金，需说明来源及金额。', inherit: true });
     paras.push({ text: '无' });
 
-    // Generate Word document using docx library
-    const docxLib = await loadDocxLib();
-    const { Document, Packer, Paragraph, TextRun, AlignmentType } = docxLib;
+    // Generate Word document using lightweight HTML-to-Word
+    let htmlContent = paras.map(p => {
+      const escaped = p.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (p.bold) {
+        return `<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">${escaped}</p>`;
+      }
+      return `<p style="margin:0;padding:0;line-height:1.5;text-indent:2em;">${escaped}</p>`;
+    }).join('');
     
-    const doc = new Document({
-      sections: [{
-        properties: {
-          page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
-        },
-        children: paras.map(p => {
-          const textRun = new TextRun({
-            text: p.text,
-            font: { ascii: '仿宋_GB2312', eastAsia: '仿宋_GB2312' },
-            size: 18, // 9pt
-            bold: p.bold || false
-          });
-          return new Paragraph({
-            alignment: p.bold ? AlignmentType.LEFT : AlignmentType.LEFT,
-            indent: { firstLine: 360 },
-            spacing: { line: 240, lineRule: 'auto' },
-            children: [textRun]
-          });
-        })
-      }]
-    });
-    
-    const blob = await Packer.toBlob(doc);
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `NSFC预算说明书_${projectType}_${totalWan}万_${new Date().toISOString().slice(0,10)}.docx`;
-    link.click();
+    const blob = generateWordBlob(htmlContent, `NSFC预算说明书_${projectType}_${totalWan}万`);
+    downloadBlob(blob, `NSFC预算说明书_${projectType}_${totalWan}万_${new Date().toISOString().slice(0,10)}.doc`);
     
     resultEl.innerHTML = `
       <div class="text-center py-10">
@@ -3008,81 +3036,22 @@ async function downloadAbstractDOCX() {
   if (!d['中文题目']) { showToast('请先生成题目摘要', 'warning'); return; }
 
   try {
-    await loadDocxLib();
-    const { Document, Packer, Paragraph, TextRun, AlignmentType } = window.docx || window.Docx;
+    // Build HTML content matching skill template
+    const htmlContent = `
+<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">题目：${escapeHtml(d['中文题目'] || '')}</p>
+<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
+<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
+<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">摘要：</span>${escapeHtml(d['中文摘要'] || '')}</p>
+<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">关键词：</span>${escapeHtml(d['中文关键词'] || '')}</p>
+<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
+<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">Title: ${escapeHtml(d['英文题目'] || '')}</p>
+<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
+<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">Abstract: </span>${escapeHtml(d['英文摘要'] || '')}</p>
+<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">Keywords: </span>${escapeHtml(d['英文关键词'] || '')}</p>
+`;
 
-    // Helper: create a run with 宋体/Times New Roman, 12pt, black, not italic
-    function makeRun(text, bold = false) {
-      return new TextRun({
-        text: text,
-        font: { ascii: 'Times New Roman', eastAsia: '宋体', hAnsi: 'Times New Roman' },
-        size: 24, // 12pt = 24 half-points
-        bold: bold,
-        italics: false,
-        color: '000000'
-      });
-    }
-
-    // Helper: create paragraph with 1.5x line spacing, no space before/after
-    function makePara(runs) {
-      return new Paragraph({
-        alignment: AlignmentType.LEFT,
-        spacing: { line: 360, lineRule: 'auto', before: 0, after: 0 },
-        children: Array.isArray(runs) ? runs : [runs]
-      });
-    }
-
-    // Build document exactly matching skill template:
-    // [1] 题目：<中文题目>
-    // [2] <空行>
-    // [3] <空行>
-    // [4] 摘要：<中文摘要>
-    // [5] 关键词：<中文关键词>
-    // [6] <空行>
-    // [7] Title: <英文题目>
-    // [8] <空行>
-    // [9] Abstract: <英文摘要>
-    // [10] Keywords: <英文关键词>
-
-    const children = [
-      // [1] 中文题目
-      makePara([makeRun('题目：', true), makeRun(d['中文题目'] || '')]),
-      // [2] 空行
-      makePara([makeRun('')]),
-      // [3] 空行
-      makePara([makeRun('')]),
-      // [4] 中文摘要
-      makePara([makeRun('摘要：', true), makeRun(d['中文摘要'] || '')]),
-      // [5] 中文关键词
-      makePara([makeRun('关键词：', true), makeRun(d['中文关键词'] || '')]),
-      // [6] 空行
-      makePara([makeRun('')]),
-      // [7] 英文题目
-      makePara([makeRun('Title: ', true), makeRun(d['英文题目'] || '')]),
-      // [8] 空行
-      makePara([makeRun('')]),
-      // [9] 英文摘要
-      makePara([makeRun('Abstract: ', true), makeRun(d['英文摘要'] || '')]),
-      // [10] 英文关键词
-      makePara([makeRun('Keywords: ', true), makeRun(d['英文关键词'] || '')]),
-    ];
-
-    const doc = new Document({
-      sections: [{
-        properties: {
-          page: {
-            margin: { top: 1440, right: 1800, bottom: 1440, left: 1800 }
-          }
-        },
-        children: children
-      }]
-    });
-
-    const blob = await Packer.toBlob(doc);
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `题目摘要关键词_${new Date().toISOString().slice(0,10)}.docx`;
-    link.click();
+    const blob = generateWordBlob(htmlContent, '题目摘要关键词');
+    downloadBlob(blob, `题目摘要关键词_${new Date().toISOString().slice(0,10)}.doc`);
     showToast('Word文档已下载');
   } catch (e) {
     console.error('DOCX generation error:', e);
