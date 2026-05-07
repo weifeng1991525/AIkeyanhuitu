@@ -1926,6 +1926,15 @@ function loadScript(src) {
   });
 }
 
+async function loadDocxLib() {
+  await loadScript('https://unpkg.com/docx@8.2.4/build/index.umd.min.js');
+  // docx UMD exposes as window.docx
+  if (!window.docx && !window.Docx) {
+    throw new Error('docx库加载失败，请刷新页面重试');
+  }
+  return window.docx || window.Docx;
+}
+
 // ==================== MEMBERSHIP ====================
 function startCountdown(btnId, seconds, type) {
   const btn = document.getElementById(btnId);
@@ -2834,9 +2843,8 @@ async function generateBudget() {
     paras.push({ text: '无' });
 
     // Generate Word document using docx library
-    await loadScript('https://unpkg.com/docx@8.2.4/build/index.umd.min.js');
-    
-    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = docx;
+    const docxLib = await loadDocxLib();
+    const { Document, Packer, Paragraph, TextRun, AlignmentType } = docxLib;
     
     const doc = new Document({
       sections: [{
@@ -3000,8 +3008,8 @@ async function downloadAbstractDOCX() {
   if (!d['中文题目']) { showToast('请先生成题目摘要', 'warning'); return; }
 
   try {
-    await loadScript('https://unpkg.com/docx@8.2.4/build/index.umd.min.js');
-    const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
+    await loadDocxLib();
+    const { Document, Packer, Paragraph, TextRun, AlignmentType } = window.docx || window.Docx;
 
     // Helper: create a run with 宋体/Times New Roman, 12pt, black, not italic
     function makeRun(text, bold = false) {
