@@ -679,23 +679,23 @@ body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; 
           <h3 class="text-lg font-semibold text-white mb-2">统计分析</h3>
           <p class="text-gray-400 text-sm">自动选择统计方法，生成分析报告与可视化图表</p>
         </div>
-        <!-- Tool 4 -->
-        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
-          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+        <!-- Tool 4: 预算生成 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer relative" onclick="switchTab('budget')">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">可用</span></div>
           <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center mb-4">
-            <i data-lucide="file-text" class="w-6 h-6 text-rose-400"></i>
+            <i data-lucide="calculator" class="w-6 h-6 text-rose-400"></i>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">论文写作</h3>
-          <p class="text-gray-400 text-sm">AI辅助SCI论文撰写，符合IMRAD结构规范</p>
+          <h3 class="text-lg font-semibold text-white mb-2">NSFC预算生成</h3>
+          <p class="text-gray-400 text-sm">根据研究内容自动生成国自然预算说明书，支持地区/面上/青年基金</p>
         </div>
-        <!-- Tool 5 -->
-        <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
-          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">即将上线</span></div>
+        <!-- Tool 5: 题目摘要生成 -->
+        <div class="glass rounded-2xl p-6 card-hover cursor-pointer relative" onclick="switchTab('abstract')">
+          <div class="absolute top-4 right-4"><span class="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">可用</span></div>
           <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center mb-4">
-            <i data-lucide="dna" class="w-6 h-6 text-cyan-400"></i>
+            <i data-lucide="file-text" class="w-6 h-6 text-cyan-400"></i>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">生信分析</h3>
-          <p class="text-gray-400 text-sm">RNA-seq、单细胞测序等组学数据分析工具</p>
+          <h3 class="text-lg font-semibold text-white mb-2">题目摘要生成</h3>
+          <p class="text-gray-400 text-sm">根据课题说明自动生成中英文题目、摘要与关键词，符合国自然规范</p>
         </div>
         <!-- Tool 6 -->
         <div class="glass rounded-2xl p-6 card-hover relative opacity-70">
@@ -904,7 +904,115 @@ body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; 
   </div>
 </div>
 
-<!-- ==================== TAB 8: LITERATURE SEARCH ==================== -->
+<!-- ==================== TAB 8: BUDGET GENERATOR ==================== -->
+<div id="tab-budget" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">NSFC预算生成</h1>
+        <p class="text-gray-400">根据研究内容自动生成国自然基金预算说明书</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-6">
+          <div class="glass rounded-2xl p-6">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">基金类型</label>
+                <select id="budgetType" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-rose-500/50">
+                  <option value="面上项目">面上项目</option>
+                  <option value="青年科学基金项目">青年科学基金</option>
+                  <option value="地区科学基金项目">地区科学基金</option>
+                  <option value="重点项目">重点项目</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">申请金额（万元）</label>
+                <input id="budgetAmount" type="number" value="50" min="10" max="500" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-rose-500/50">
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">项目名称</label>
+              <input id="budgetTitle" type="text" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-rose-500/50" placeholder="例：基于铁死亡调控机制的XX在YY中的功能研究">
+            </div>
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">研究内容概述</label>
+              <textarea id="budgetContent" rows="6" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-rose-500/50 resize-none text-sm leading-relaxed" placeholder="请简要描述研究内容、研究方案、实验材料等，例如：&#10;1. 研究XX基因在YY疾病中的表达与功能&#10;2. 构建动物模型进行体内验证&#10;3. 使用细胞实验进行体外机制研究&#10;4. 收集临床样本进行相关性分析"></textarea>
+            </div>
+            <button onclick="generateBudget()" class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 text-white font-semibold hover:from-rose-400 hover:to-rose-500 transition-all shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2">
+              <i data-lucide="calculator" class="w-5 h-5"></i> 生成预算说明书
+            </button>
+          </div>
+        </div>
+        <div>
+          <div id="budgetResult" class="glass rounded-2xl p-6 min-h-[500px]">
+            <div class="text-center text-gray-500 py-20">
+              <i data-lucide="calculator" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+              <p class="text-sm">填写研究信息后<br>点击生成查看预算说明书</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 9: ABSTRACT GENERATOR ==================== -->
+<div id="tab-abstract" class="tab-content">
+  <div class="min-h-screen pt-8 pb-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="font-display text-3xl font-bold text-white mb-2">题目摘要生成</h1>
+        <p class="text-gray-400">根据课题说明自动生成中英文题目、摘要与关键词</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-6">
+          <div class="glass rounded-2xl p-6">
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">项目说明</label>
+              <textarea id="abstractInput" rows="8" class="w-full bg-navy-800/50 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 resize-none text-sm leading-relaxed" placeholder="请输入项目说明，包括：&#10;1. 研究背景与科学问题&#10;2. 研究假说&#10;3. 主要研究内容&#10;4. 预期成果&#10;&#10;例如：&#10;本项目拟研究GPX4介导的铁死亡在胰腺癌耐药中的作用及分子机制。前期发现胰腺癌组织中GPX4高表达与不良预后相关，沉默GPX4可恢复胰腺癌细胞对吉西他滨的敏感性。本项目将从体内外水平验证GPX4调控铁死亡逆转胰腺癌耐药的机制，为胰腺癌治疗提供新靶点。"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">学科领域</label>
+                <select id="abstractField" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
+                  <option value="肿瘤学">肿瘤学</option>
+                  <option value="心血管病学">心血管病学</option>
+                  <option value="神经科学">神经科学</option>
+                  <option value="免疫学">免疫学</option>
+                  <option value="药理学">药理学</option>
+                  <option value="中医药学">中医药学</option>
+                  <option value="分子生物学">分子生物学</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">基金类型</label>
+                <select id="abstractFundType" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
+                  <option value="面上项目">面上项目</option>
+                  <option value="青年科学基金项目">青年科学基金</option>
+                  <option value="地区科学基金项目">地区科学基金</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="generateAbstract()" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-semibold hover:from-cyan-400 hover:to-cyan-500 transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2">
+              <i data-lucide="file-text" class="w-5 h-5"></i> 生成题目摘要
+            </button>
+          </div>
+        </div>
+        <div>
+          <div id="abstractResult" class="glass rounded-2xl p-6 min-h-[500px]">
+            <div class="text-center text-gray-500 py-20">
+              <i data-lucide="file-text" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+              <p class="text-sm">填写项目说明后<br>点击生成查看题目摘要</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 10: LITERATURE SEARCH ==================== -->
 <div id="tab-literature" class="tab-content">
   <div class="min-h-screen pt-8 pb-20 px-4">
     <div class="max-w-7xl mx-auto">
@@ -2400,6 +2508,220 @@ function animateStats() {
     }
     requestAnimationFrame(update);
   });
+}
+
+// ==================== AI TEXT API ====================
+const CHAT_API_URL = 'https://kuaipao.ai/v1/chat/completions';
+const CHAT_API_KEY = 'sk-WvlDXFsd7k9Ze7wA9Yckuj0xSbfY6i55Jra0xohSr8isK5QM';
+const CHAT_MODEL = 'gpt-5-chat-latest';
+
+async function callChatAPI(systemPrompt, userMessage) {
+  const resp = await fetch(CHAT_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CHAT_API_KEY },
+    body: JSON.stringify({
+      model: CHAT_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.7,
+      max_tokens: 4096
+    })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message || 'API Error');
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ==================== BUDGET GENERATOR ====================
+async function generateBudget() {
+  const fundType = document.getElementById('budgetType').value;
+  const amount = document.getElementById('budgetAmount').value;
+  const title = document.getElementById('budgetTitle').value.trim();
+  const content = document.getElementById('budgetContent').value.trim();
+  if (!title || !content) { showToast('请填写项目名称和研究内容', 'warning'); return; }
+  const resultEl = document.getElementById('budgetResult');
+  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成预算说明书...</p><p class="text-gray-500 text-xs mt-2">预计需要30-60秒</p></div>`;
+  const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）预算编制专家。请根据用户提供的研究信息，生成一份完整、专业的预算说明书。
+要求：
+1. 严格按照NSFC预算科目分类（设备费、材料费、测试化验加工费、燃料动力费、差旅/会议/国际合作与交流费、出版/文献/信息传播/知识产权事务费、劳务费、专家咨询费、其他支出）
+2. 每个科目需列出具体明细、测算依据和金额
+3. 总金额必须等于用户指定的申请金额
+4. 预算分配需合理，符合NSFC资助政策
+5. 输出格式为纯文本，结构清晰，可直接用于申请书
+
+输出格式：
+【项目名称】XXX
+【申请金额】XXX万元
+【预算明细】
+一、设备费（XX万元，占比XX%）
+  1. XXX设备 XX万元（测算依据）
+二、材料费（XX万元，占比XX%）
+  ...（以此类推）
+【预算说明】
+（总体说明预算分配的合理性）`;
+
+  const userMessage = `基金类型：${fundType}\n申请金额：${amount}万元\n项目名称：${title}\n研究内容概述：${content}`;
+
+  try {
+    const result = await callChatAPI(systemPrompt, userMessage);
+    resultEl.innerHTML = `
+      <div class="animate-fade-in space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-rose-400 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4"></i> 预算说明书</h3>
+          <div class="flex gap-2">
+            <button onclick="downloadBudgetText()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 text-xs font-medium hover:bg-rose-500/30 transition-all flex items-center gap-1"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> 下载TXT</button>
+            <button onclick="downloadBudgetDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载DOCX</button>
+          </div>
+        </div>
+        <div id="budgetTextContent" class="bg-navy-800/50 rounded-xl p-5 text-sm text-gray-300 leading-relaxed max-h-[500px] overflow-y-auto whitespace-pre-wrap">${escapeHtml(result)}</div>
+      </div>`;
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('预算说明书生成完成');
+  } catch (e) {
+    resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">${e.message}</p></div>`;
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('生成失败: ' + e.message, 'error');
+  }
+}
+
+function downloadBudgetText() {
+  const text = document.getElementById('budgetTextContent')?.textContent || '';
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `NSFC预算说明书-${new Date().toISOString().slice(0,10)}.txt`;
+  link.click();
+  showToast('TXT已下载');
+}
+
+function downloadBudgetDOCX() {
+  const text = document.getElementById('budgetTextContent')?.textContent || '';
+  const lines = text.split('\n').filter(l => l.trim());
+  // Build simple HTML for docx conversion
+  let html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.8;margin:40px}h1{font-size:16pt;text-align:center}h2{font-size:14pt;margin-top:20px}.section{margin:10px 0}</style></head><body>';
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('【') && trimmed.endsWith('】')) {
+      html += `<h2>${trimmed}</h2>`;
+    } else if (/^[一二三四五六七八九十]、/.test(trimmed)) {
+      html += `<h3 style="font-size:13pt;font-weight:bold">${trimmed}</h3>`;
+    } else {
+      html += `<p>${trimmed}</p>`;
+    }
+  });
+  html += '</body></html>';
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `NSFC预算说明书-${new Date().toISOString().slice(0,10)}.doc`;
+  link.click();
+  showToast('DOCX已下载');
+}
+
+// ==================== ABSTRACT GENERATOR ====================
+async function generateAbstract() {
+  const input = document.getElementById('abstractInput').value.trim();
+  const field = document.getElementById('abstractField').value;
+  const fundType = document.getElementById('abstractFundType').value;
+  if (!input) { showToast('请填写项目说明', 'warning'); return; }
+  const resultEl = document.getElementById('abstractResult');
+  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成题目与摘要...</p><p class="text-gray-500 text-xs mt-2">预计需要30-60秒</p></div>`;
+
+  const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）申请书撰写专家，精通中英文科技论文写作。请根据用户提供的项目说明，生成符合NSFC规范的中英文题目、摘要和关键词。
+
+要求：
+1. 中文题目：简洁精准，体现创新性，20字以内，避免使用"研究"、"探讨"等泛词
+2. 英文题目：与中文对应，符合SCI论文命名习惯
+3. 中文摘要：400字以内，包含背景（1-2句）、科学问题（1句）、假说（1句）、研究内容（3-4句）、意义（1-2句），逻辑严密
+4. 英文摘要：与中文对应，符合SCI论文摘要规范，250词以内
+5. 中文关键词：5个，用分号分隔
+6. 英文关键词：5个，与中文对应，用分号分隔
+
+输出格式（严格按此格式）：
+===中文题目===
+XXX
+
+===英文题目===
+XXX
+
+===中文摘要===
+XXX
+
+===英文摘要===
+XXX
+
+===中文关键词===
+XXX;XXX;XXX;XXX;XXX
+
+===英文关键词===
+XXX;XXX;XXX;XXX;XXX`;
+
+  const userMessage = `学科领域：${field}\n基金类型：${fundType}\n项目说明：${input}`;
+
+  try {
+    const result = await callChatAPI(systemPrompt, userMessage);
+    // Parse result
+    const sections = {};
+    const sectionNames = ['中文题目','英文题目','中文摘要','英文摘要','中文关键词','英文关键词'];
+    sectionNames.forEach(name => {
+      const regex = new RegExp(`===${name}===\\s*\\n([\\s\\S]*?)(?=\\n===|$)`);
+      const match = result.match(regex);
+      sections[name] = match ? match[1].trim() : '';
+    });
+
+    resultEl.innerHTML = `
+      <div class="animate-fade-in space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> 生成结果</h3>
+          <div class="flex gap-2">
+            <button onclick="downloadAbstractDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载DOCX</button>
+          </div>
+        </div>
+        <div id="abstractTextContent" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          ${sectionNames.map(name => `
+            <div class="bg-navy-800/50 rounded-xl p-4">
+              <div class="text-xs font-medium text-cyan-400 mb-2">${name}</div>
+              <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections[name] || '未生成')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    // Store for download
+    window._abstractData = sections;
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('题目摘要生成完成');
+  } catch (e) {
+    resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">${e.message}</p></div>`;
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast('生成失败: ' + e.message, 'error');
+  }
+}
+
+function downloadAbstractDOCX() {
+  const d = window._abstractData || {};
+  let html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.8;margin:40px}h1{font-size:16pt;text-align:center;margin-bottom:20px}.section{margin:15px 0}.label{font-weight:bold;color:#333;margin-bottom:5px}.content{margin:5px 0 15px;text-indent:2em}.keywords{text-indent:0}</style></head><body>';
+  html += '<h1>题目与摘要</h1>';
+  if (d['中文题目']) html += `<div class="section"><div class="label">中文题目</div><div class="content" style="text-indent:0;font-size:14pt">${d['中文题目']}</div></div>`;
+  if (d['英文题目']) html += `<div class="section"><div class="label">英文题目</div><div class="content" style="text-indent:0;font-style:italic">${d['英文题目']}</div></div>`;
+  if (d['中文摘要']) html += `<div class="section"><div class="label">中文摘要</div><div class="content">${d['中文摘要']}</div></div>`;
+  if (d['英文摘要']) html += `<div class="section"><div class="label">英文摘要</div><div class="content" style="font-style:italic">${d['英文摘要']}</div></div>`;
+  if (d['中文关键词']) html += `<div class="section"><div class="label">中文关键词</div><div class="content keywords">${d['中文关键词']}</div></div>`;
+  if (d['英文关键词']) html += `<div class="section"><div class="label">英文关键词</div><div class="content keywords" style="font-style:italic">${d['英文关键词']}</div></div>`;
+  html += '</body></html>';
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `题目摘要-${new Date().toISOString().slice(0,10)}.doc`;
+  link.click();
+  showToast('DOCX已下载');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ==================== LITERATURE SEARCH ====================
