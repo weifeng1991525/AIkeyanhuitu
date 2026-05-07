@@ -2512,26 +2512,59 @@ function animateStats() {
 
 // ==================== AI TEXT API ====================
 const CHAT_API_URL = 'https://kuaipao.ai/v1/chat/completions';
-const CHAT_API_KEY = 'sk-WvlDXFsd7k9Ze7wA9Yckuj0xSbfY6i55Jra0xohSr8isK5QM';
-const CHAT_MODEL = 'gpt-5-chat-latest';
+const CHAT_API_KEY = 'sk-2G1RM7XawcjRJ0EuNAx9cpB6lJNHol1roS2vxmHWJRpODiSQ';
+const CHAT_MODEL = 'gpt-5-codex';
 
 async function callChatAPI(systemPrompt, userMessage) {
-  const resp = await fetch(CHAT_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CHAT_API_KEY },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ],
-      temperature: 0.7,
-      max_tokens: 4096
-    })
-  });
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error.message || 'API Error');
-  return data.choices?.[0]?.message?.content || '';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+    
+    const resp = await fetch(CHAT_API_URL, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': 'Bearer ' + CHAT_API_KEY 
+      },
+      body: JSON.stringify({
+        model: CHAT_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.7,
+        max_tokens: 4096
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error('API Error:', resp.status, errorText);
+      throw new Error(`API请求失败 (${resp.status}): ${errorText || '未知错误'}`);
+    }
+    
+    const data = await resp.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || 'API返回错误');
+    }
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid API response:', data);
+      throw new Error('API返回格式异常');
+    }
+    
+    return data.choices[0].message.content || '';
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试');
+    }
+    console.error('callChatAPI error:', error);
+    throw error;
+  }
 }
 
 // ==================== BUDGET GENERATOR ====================
