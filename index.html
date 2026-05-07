@@ -2899,17 +2899,17 @@ async function generateAbstract() {
   const resultEl = document.getElementById('abstractResult');
   resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成题目与摘要...</p><p class="text-gray-500 text-xs mt-2">预计需要30-60秒</p></div>`;
 
-  const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）申请书撰写专家，精通中英文科技论文写作。请根据用户提供的项目说明，生成符合NSFC规范的中英文题目、摘要和关键词。
+  const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）申请书撰写专家。请根据用户提供的项目说明，生成中英文题目、摘要和关键词。
 
-要求：
-1. 中文题目：简洁精准，体现创新性，20字以内，避免使用"研究"、"探讨"等泛词
-2. 英文题目：与中文对应，符合SCI论文命名习惯
-3. 中文摘要：400字以内，包含背景（1-2句）、科学问题（1句）、假说（1句）、研究内容（3-4句）、意义（1-2句），逻辑严密
-4. 英文摘要：与中文对应，符合SCI论文摘要规范，250词以内
-5. 中文关键词：5个，用分号分隔
-6. 英文关键词：5个，与中文对应，用分号分隔
+严格要求：
+1. 中文题目：20字以内，简洁精准，避免"研究""探讨"等泛词
+2. 英文题目：与中文对应，纯英文，符合SCI论文命名习惯，不得含有任何中文字符
+3. 中文摘要：不超过400个字符（含标点），一段连续文字，包含：临床难点(1-2句)+科学问题(1句)+假说(1句)+研究内容(3-4句)+意义(1-2句)
+4. 英文摘要：纯英文，不得含有任何中文字符，与中文摘要五段结构严格对应，250词以内
+5. 中文关键词：5个，用中文分号"；"分隔
+6. 英文关键词：5个，与中文对应，用英文分号"; "分隔，纯英文
 
-输出格式（严格按此格式）：
+输出格式（严格按此格式，不要添加任何额外说明）：
 ===中文题目===
 XXX
 
@@ -2923,16 +2923,15 @@ XXX
 XXX
 
 ===中文关键词===
-XXX;XXX;XXX;XXX;XXX
+XXX；XXX；XXX；XXX；XXX
 
 ===英文关键词===
-XXX;XXX;XXX;XXX;XXX`;
+XXX; XXX; XXX; XXX; XXX`;
 
   const userMessage = `学科领域：${field}\n基金类型：${fundType}\n项目说明：${input}`;
 
   try {
     const result = await callChatAPI(systemPrompt, userMessage);
-    // Parse result
     const sections = {};
     const sectionNames = ['中文题目','英文题目','中文摘要','英文摘要','中文关键词','英文关键词'];
     sectionNames.forEach(name => {
@@ -2941,25 +2940,52 @@ XXX;XXX;XXX;XXX;XXX`;
       sections[name] = match ? match[1].trim() : '';
     });
 
+    // Quality checks
+    const warnings = [];
+    if (sections['中文摘要'].length > 400) warnings.push(`中文摘要${sections['中文摘要'].length}字符，超出400字限制`);
+    if (/[\u4e00-\u9fff]/.test(sections['英文题目'])) warnings.push('英文题目含中文字符');
+    if (/[\u4e00-\u9fff]/.test(sections['英文摘要'])) warnings.push('英文摘要含中文字符');
+
+    window._abstractData = sections;
+
+    const warningHtml = warnings.length > 0 
+      ? `<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4"><div class="text-xs text-amber-400 font-medium mb-1">⚠️ 质量提示</div>${warnings.map(w => `<div class="text-xs text-amber-300">${w}</div>`).join('')}</div>` 
+      : '';
+
     resultEl.innerHTML = `
       <div class="animate-fade-in space-y-4">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> 生成结果</h3>
-          <div class="flex gap-2">
-            <button onclick="downloadAbstractDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载DOCX</button>
+          <button onclick="downloadAbstractDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载Word</button>
+        </div>
+        ${warningHtml}
+        <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">中文题目 <span class="text-gray-500">(${sections['中文题目'].length}字)</span></div>
+            <div class="text-sm text-white font-medium">${escapeHtml(sections['中文题目'] || '未生成')}</div>
+          </div>
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">英文题目</div>
+            <div class="text-sm text-white">${escapeHtml(sections['英文题目'] || '未生成')}</div>
+          </div>
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">中文摘要 <span class="${sections['中文摘要'].length > 400 ? 'text-red-400' : 'text-green-400'}">${sections['中文摘要'].length}/400字符</span></div>
+            <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections['中文摘要'] || '未生成')}</div>
+          </div>
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">英文摘要</div>
+            <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections['英文摘要'] || '未生成')}</div>
+          </div>
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">中文关键词</div>
+            <div class="text-sm text-gray-300">${escapeHtml(sections['中文关键词'] || '未生成')}</div>
+          </div>
+          <div class="bg-navy-800/50 rounded-xl p-4">
+            <div class="text-xs text-cyan-400 mb-1">英文关键词</div>
+            <div class="text-sm text-gray-300">${escapeHtml(sections['英文关键词'] || '未生成')}</div>
           </div>
         </div>
-        <div id="abstractTextContent" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-          ${sectionNames.map(name => `
-            <div class="bg-navy-800/50 rounded-xl p-4">
-              <div class="text-xs font-medium text-cyan-400 mb-2">${name}</div>
-              <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections[name] || '未生成')}</div>
-            </div>
-          `).join('')}
-        </div>
       </div>`;
-    // Store for download
-    window._abstractData = sections;
     setTimeout(() => lucide.createIcons(), 50);
     showToast('题目摘要生成完成');
   } catch (e) {
@@ -2969,23 +2995,91 @@ XXX;XXX;XXX;XXX;XXX`;
   }
 }
 
-function downloadAbstractDOCX() {
+async function downloadAbstractDOCX() {
   const d = window._abstractData || {};
-  let html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.8;margin:40px}h1{font-size:16pt;text-align:center;margin-bottom:20px}.section{margin:15px 0}.label{font-weight:bold;color:#333;margin-bottom:5px}.content{margin:5px 0 15px;text-indent:2em}.keywords{text-indent:0}</style></head><body>';
-  html += '<h1>题目与摘要</h1>';
-  if (d['中文题目']) html += `<div class="section"><div class="label">中文题目</div><div class="content" style="text-indent:0;font-size:14pt">${d['中文题目']}</div></div>`;
-  if (d['英文题目']) html += `<div class="section"><div class="label">英文题目</div><div class="content" style="text-indent:0;font-style:italic">${d['英文题目']}</div></div>`;
-  if (d['中文摘要']) html += `<div class="section"><div class="label">中文摘要</div><div class="content">${d['中文摘要']}</div></div>`;
-  if (d['英文摘要']) html += `<div class="section"><div class="label">英文摘要</div><div class="content" style="font-style:italic">${d['英文摘要']}</div></div>`;
-  if (d['中文关键词']) html += `<div class="section"><div class="label">中文关键词</div><div class="content keywords">${d['中文关键词']}</div></div>`;
-  if (d['英文关键词']) html += `<div class="section"><div class="label">英文关键词</div><div class="content keywords" style="font-style:italic">${d['英文关键词']}</div></div>`;
-  html += '</body></html>';
-  const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `题目摘要-${new Date().toISOString().slice(0,10)}.doc`;
-  link.click();
-  showToast('DOCX已下载');
+  if (!d['中文题目']) { showToast('请先生成题目摘要', 'warning'); return; }
+
+  try {
+    await loadScript('https://unpkg.com/docx@8.2.4/build/index.umd.min.js');
+    const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
+
+    // Helper: create a run with 宋体/Times New Roman, 12pt, black, not italic
+    function makeRun(text, bold = false) {
+      return new TextRun({
+        text: text,
+        font: { ascii: 'Times New Roman', eastAsia: '宋体', hAnsi: 'Times New Roman' },
+        size: 24, // 12pt = 24 half-points
+        bold: bold,
+        italics: false,
+        color: '000000'
+      });
+    }
+
+    // Helper: create paragraph with 1.5x line spacing, no space before/after
+    function makePara(runs) {
+      return new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { line: 360, lineRule: 'auto', before: 0, after: 0 },
+        children: Array.isArray(runs) ? runs : [runs]
+      });
+    }
+
+    // Build document exactly matching skill template:
+    // [1] 题目：<中文题目>
+    // [2] <空行>
+    // [3] <空行>
+    // [4] 摘要：<中文摘要>
+    // [5] 关键词：<中文关键词>
+    // [6] <空行>
+    // [7] Title: <英文题目>
+    // [8] <空行>
+    // [9] Abstract: <英文摘要>
+    // [10] Keywords: <英文关键词>
+
+    const children = [
+      // [1] 中文题目
+      makePara([makeRun('题目：', true), makeRun(d['中文题目'] || '')]),
+      // [2] 空行
+      makePara([makeRun('')]),
+      // [3] 空行
+      makePara([makeRun('')]),
+      // [4] 中文摘要
+      makePara([makeRun('摘要：', true), makeRun(d['中文摘要'] || '')]),
+      // [5] 中文关键词
+      makePara([makeRun('关键词：', true), makeRun(d['中文关键词'] || '')]),
+      // [6] 空行
+      makePara([makeRun('')]),
+      // [7] 英文题目
+      makePara([makeRun('Title: ', true), makeRun(d['英文题目'] || '')]),
+      // [8] 空行
+      makePara([makeRun('')]),
+      // [9] 英文摘要
+      makePara([makeRun('Abstract: ', true), makeRun(d['英文摘要'] || '')]),
+      // [10] 英文关键词
+      makePara([makeRun('Keywords: ', true), makeRun(d['英文关键词'] || '')]),
+    ];
+
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            margin: { top: 1440, right: 1800, bottom: 1440, left: 1800 }
+          }
+        },
+        children: children
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `题目摘要关键词_${new Date().toISOString().slice(0,10)}.docx`;
+    link.click();
+    showToast('Word文档已下载');
+  } catch (e) {
+    console.error('DOCX generation error:', e);
+    showToast('文档生成失败: ' + e.message, 'error');
+  }
 }
 
 function escapeHtml(text) {
