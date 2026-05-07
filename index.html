@@ -570,30 +570,61 @@ body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; 
         <div class="space-y-4">
           <!-- Settings -->
           <div class="glass rounded-2xl p-6">
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs text-gray-400 mb-2">模型</label>
-                <select class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
-                  <option>DALL-E 3</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs text-gray-400 mb-2">尺寸</label>
-                <select id="imgSize" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
-                  <option value="1024x1024">1024x1024</option>
-                  <option value="1792x1024">1792x1024</option>
-                  <option value="1024x1792">1024x1792</option>
+                <select id="customModel" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option value="gpt-image-2-pro">gpt-image-2-pro</option>
+                  <option value="gpt-image-2">gpt-image-2</option>
                 </select>
               </div>
               <div>
                 <label class="block text-xs text-gray-400 mb-2">质量</label>
-                <select class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
-                  <option>HD</option>
-                  <option>Standard</option>
+                <select id="customQuality" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option value="high">高质量 (high)</option>
+                  <option value="medium">标准 (medium)</option>
+                  <option value="low">草稿 (low)</option>
                 </select>
               </div>
             </div>
-            <button onclick="generateCustomImage()" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold hover:from-purple-400 hover:to-purple-500 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2">
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">尺寸</label>
+                <select id="customSize" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <optgroup label="纵向">
+                    <option value="1024x1536" selected>1024x1536 (3:4)</option>
+                    <option value="768x1024">768x1024 (3:4)</option>
+                    <option value="864x1536">864x1536 (9:16)</option>
+                  </optgroup>
+                  <optgroup label="横向">
+                    <option value="1024x768">1024x768 (4:3)</option>
+                    <option value="1024x1024">1024x1024 (1:1)</option>
+                    <option value="1152x768">1152x768 (3:2)</option>
+                  </optgroup>
+                  <optgroup label="宽屏">
+                    <option value="2048x1152">2048x1152 (16:9)</option>
+                    <option value="1536x1024">1536x1024</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-2">张数</label>
+                <select id="customCount" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
+                  <option value="1">1 张</option>
+                  <option value="2">2 张</option>
+                  <option value="3">3 张</option>
+                  <option value="4">4 张</option>
+                </select>
+              </div>
+            </div>
+            <div id="customProgress" class="hidden mt-3">
+              <div class="flex items-center gap-3 text-sm text-gray-400">
+                <div class="spinner !w-5 !h-5 !border-2"></div>
+                <span id="customProgressText">正在生成图片...</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-1.5 mt-2"><div id="customProgressBar" class="bg-teal-500 h-1.5 rounded-full transition-all" style="width:0%"></div></div>
+            </div>
+            <button id="customGenerateBtn" onclick="generateCustomImage()" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold hover:from-purple-400 hover:to-purple-500 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2">
               <i data-lucide="wand-2" class="w-5 h-5"></i> 生成图片
             </button>
           </div>
@@ -1383,6 +1414,17 @@ function showToast(msg, type = 'success') {
   const toastIcon = document.getElementById('toastIcon');
   toastMsg.textContent = msg;
   toast.classList.remove('hidden');
+  if (type === 'error') {
+    toastIcon.setAttribute('data-lucide', 'x-circle');
+    toastIcon.className = 'w-5 h-5 text-red-400';
+  } else if (type === 'info') {
+    toastIcon.setAttribute('data-lucide', 'info');
+    toastIcon.className = 'w-5 h-5 text-blue-400';
+  } else {
+    toastIcon.setAttribute('data-lucide', 'check-circle');
+    toastIcon.className = 'w-5 h-5 text-green-400';
+  }
+  lucide.createIcons();
   setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
@@ -1399,15 +1441,15 @@ async function generateHypothesis() {
   const resultEl = document.getElementById('hypoResult');
   resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成假说图，预计需要30-60秒...</p><p class="text-gray-500 text-xs mt-2">请勿关闭页面</p></div>`;
   try {
-    const imgUrl = await callImageAPI(input, HYPOTHESIS_PROMPT, '3840x2160', 'high');
+    const imgUrl = await callImageAPICustom(input, HYPOTHESIS_PROMPT, '3840x2160', 'high', 'gpt-image-2-pro');
     resultEl.innerHTML = `
       <div class="animate-fade-in space-y-4">
         <div>
           <h3 class="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> AI生成假说图</h3>
-          <div class="rounded-xl overflow-hidden border border-white/10"><img src="${imgUrl}" alt="假说机制图" class="w-full" /></div>
+          <div class="rounded-xl overflow-hidden border border-white/10"><img src="${imgUrl}" alt="假说机制图" class="w-full" crossorigin="anonymous" /></div>
         </div>
         <div class="flex gap-3">
-          <a href="${imgUrl}" target="_blank" download="hypothesis-diagram.png" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载图片</a>
+          <button onclick="downloadSingleImage('${imgUrl}', 'hypothesis-diagram-${Date.now()}.png')" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载图片</button>
           <button onclick="generateHypothesis()" class="flex-1 py-2.5 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
         </div>
       </div>`;
@@ -1438,7 +1480,7 @@ function showHypoResult(result) {
         <h3 class="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> 机制图</h3>
         <div class="rounded-xl overflow-hidden border border-white/10">${result.img}</div>
       </div>
-      <button onclick="showToast('图片已保存')" class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2">
+      <button onclick="showToast('图片已保存')" id="hypoResultDownloadBtn" class="w-full py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2">
         <i data-lucide="download" class="w-4 h-4"></i> 下载图片
       </button>
     </div>`;
@@ -1458,15 +1500,15 @@ async function generateRoadmap() {
   const resultEl = document.getElementById('roadResult');
   resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在规划技术路线，预计需要30-60秒...</p><p class="text-gray-500 text-xs mt-2">请勿关闭页面</p></div>`;
   try {
-    const imgUrl = await callImageAPI(input, ROADMAP_PROMPT, '2160x3840', 'high');
+    const imgUrl = await callImageAPICustom(input, ROADMAP_PROMPT, '2160x3840', 'high', 'gpt-image-2-pro');
     resultEl.innerHTML = `
       <div class="animate-fade-in space-y-4">
         <div>
           <h3 class="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> AI生成技术路线图</h3>
-          <div class="rounded-xl overflow-hidden border border-white/10"><img src="${imgUrl}" alt="技术路线图" class="w-full" /></div>
+          <div class="rounded-xl overflow-hidden border border-white/10"><img src="${imgUrl}" alt="技术路线图" class="w-full" crossorigin="anonymous" /></div>
         </div>
         <div class="flex gap-3">
-          <a href="${imgUrl}" target="_blank" download="roadmap-diagram.png" class="flex-1 py-2.5 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载图片</a>
+          <button onclick="downloadSingleImage('${imgUrl}', 'roadmap-diagram-${Date.now()}.png')" class="flex-1 py-2.5 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载图片</button>
           <button onclick="generateRoadmap()" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
         </div>
       </div>`;
@@ -1558,25 +1600,136 @@ async function generateCustomImage() {
   const prompt = document.getElementById('customPrompt').value.trim();
   if (!prompt) { showToast('请输入提示词'); return; }
   const el = document.getElementById('customResult');
-  const size = document.getElementById('imgSize').value;
-  el.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成图片，预计需要30-60秒...</p><p class="text-gray-500 text-xs mt-2">请勿关闭页面</p></div>`;
+  const model = document.getElementById('customModel').value;
+  const size = document.getElementById('customSize').value;
+  const quality = document.getElementById('customQuality').value;
+  const count = parseInt(document.getElementById('customCount').value);
+
+  // Show progress
+  document.getElementById('customProgress').classList.remove('hidden');
+  document.getElementById('customProgressBar').style.width = '0%';
+  document.getElementById('customProgressText').textContent = '正在生成图片...';
+  document.getElementById('customGenerateBtn').disabled = true;
+  document.getElementById('customGenerateBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+  el.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成图片，预计需要30-120秒...</p><p class="text-gray-500 text-xs mt-2">请勿关闭页面</p></div>`;
+
   try {
-    const imgUrl = await callImageAPI(prompt, '', size, 'high');
-    el.innerHTML = `
-      <div class="animate-fade-in space-y-4">
-        <div class="rounded-xl overflow-hidden border border-white/10"><img src="${imgUrl}" alt="AI生成图片" class="w-full" /></div>
-        <div class="flex gap-3">
-          <a href="${imgUrl}" target="_blank" download="custom-image.png" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载</a>
-          <button onclick="generateCustomImage()" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
-        </div>
-      </div>`;
+    // Generate images sequentially with progress
+    const imgUrls = [];
+    for (let i = 0; i < count; i++) {
+      document.getElementById('customProgressText').textContent = `正在生成第 ${i + 1}/${count} 张图片...`;
+      document.getElementById('customProgressBar').style.width = `${((i + 1) / count) * 100}%`;
+      const url = await callImageAPICustom(prompt, '', size, quality, model);
+      imgUrls.push(url);
+    }
+
+    document.getElementById('customProgressBar').style.width = '100%';
+    document.getElementById('customProgressText').textContent = '生成完成！';
+
+    // Render result
+    if (count === 1) {
+      el.innerHTML = `
+        <div class="animate-fade-in space-y-4">
+          <div class="rounded-xl overflow-hidden border border-white/10"><img id="customImg" src="${imgUrls[0]}" alt="AI生成图片" class="w-full" crossorigin="anonymous" /></div>
+          <div class="flex gap-3">
+            <button id="customDownloadBtn" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载</button>
+            <button onclick="generateCustomImage()" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
+          </div>
+        </div>`;
+      // Single image direct download
+      document.getElementById('customDownloadBtn').onclick = () => downloadSingleImage(imgUrls[0], `medai-custom-${Date.now()}.png`);
+    } else {
+      // Multiple images with ZIP download
+      el.innerHTML = `
+        <div class="animate-fade-in space-y-4">
+          <div class="grid grid-cols-2 gap-2">${imgUrls.map((url, i) => `<img src="${url}" alt="AI生成图片${i+1}" class="rounded-lg border border-white/10 w-full aspect-square object-cover" crossorigin="anonymous" />`).join('')}</div>
+          <div class="flex gap-3">
+            <button id="customDownloadBtn" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> 下载全部 (ZIP)</button>
+            <button onclick="generateCustomImage()" class="flex-1 py-2.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
+          </div>
+        </div>`;
+      document.getElementById('customDownloadBtn').onclick = () => downloadImagesAsZip(imgUrls);
+    }
+
     setTimeout(() => lucide.createIcons(), 50);
-    showToast('图片生成完成');
+    showToast(`成功生成 ${count} 张图片`);
   } catch (e) {
     el.innerHTML = `<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm font-medium">生成失败</p><p class="text-gray-500 text-xs mt-1">${e.message}</p><button onclick="generateCustomImage()" class="mt-4 px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 text-xs hover:bg-purple-500/30">重试</button></div>`;
     setTimeout(() => lucide.createIcons(), 50);
     showToast('生成失败: ' + e.message, 'error');
+  } finally {
+    document.getElementById('customGenerateBtn').disabled = false;
+    document.getElementById('customGenerateBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+    setTimeout(() => document.getElementById('customProgress').classList.add('hidden'), 2000);
   }
+}
+
+async function callImageAPICustom(userContent, prefixPrompt, size, quality, model) {
+  const fullPrompt = prefixPrompt + '\n' + userContent;
+  const resp = await fetch(IMG_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + IMG_API_KEY },
+    body: JSON.stringify({ model: model, prompt: fullPrompt, size: size, quality: quality, n: 1 })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message || 'API Error');
+  if (data.data && data.data[0]) {
+    const item = data.data[0];
+    if (item.url) return item.url;
+    if (item.b64_json) return 'data:image/png;base64,' + item.b64_json;
+  }
+  throw new Error('No image in response');
+}
+
+function downloadSingleImage(dataUrl, filename) {
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = filename;
+  link.click();
+}
+
+async function downloadImagesAsZip(urls) {
+  showToast('正在打包图片...', 'info');
+  // Create JSZip dynamically
+  const JSZipCDN = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  await loadScript(JSZipCDN);
+  const zip = new JSZip();
+  const timestamp = new Date().toISOString().slice(0, 10);
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i];
+    const ext = url.includes('png') ? 'png' : 'jpg';
+    const filename = `medai-custom-${timestamp}-${String(i + 1).padStart(2, '0')}.${ext}`;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      zip.file(filename, blob);
+    } catch {
+      // Fallback: use base64 data URL
+      const base64 = url.split(',')[1];
+      if (base64) {
+        const binary = atob(base64);
+        const array = new Uint8Array(binary.length);
+        for (let j = 0; j < binary.length; j++) array[j] = binary.charCodeAt(j);
+        zip.file(filename, array);
+      }
+    }
+  }
+  const content = await zip.generateAsync({ type: 'blob' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(content);
+  link.download = `medai-custom-${timestamp}.zip`;
+  link.click();
+  showToast('ZIP下载开始');
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
 
 // ==================== MEMBERSHIP ====================
