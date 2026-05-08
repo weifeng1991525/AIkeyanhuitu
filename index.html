@@ -911,13 +911,29 @@ body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; 
             <span>等待扫码...</span>
           </div>
         </div>
+        <!-- WeChat Config Error Help -->
+        <div id="wxConfigHelp" class="hidden bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4">
+          <div class="flex items-start gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+            <div class="text-xs text-amber-300 space-y-1">
+              <p class="font-medium text-amber-400">微信登录配置未完成</p>
+              <p>请按以下步骤操作：</p>
+              <ol class="list-decimal list-inside space-y-0.5 text-amber-300/80">
+                <li>登录<a href="https://open.weixin.qq.com" target="_blank" class="underline">微信开放平台</a></li>
+                <li>确认应用已开通"微信登录"能力</li>
+                <li>添加授权回调域：<code class="bg-amber-500/20 px-1 rounded">' + window.location.hostname + '</code></li>
+                <li>网站应用需完成ICP备案</li>
+              </ol>
+            </div>
+          </div>
+        </div>
         <!-- Alternative login methods -->
         <div class="border-t border-white/10 pt-4 mt-4">
           <p class="text-xs text-gray-500 mb-3">其他登录方式</p>
           <div class="flex gap-3 justify-center">
             <button onclick="wxRedirectLogin()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/10 text-green-400 text-sm font-medium hover:bg-green-500/20 transition-all">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.68 4.025c-3.694 0-6.69 2.462-6.69 5.496 0 3.034 2.996 5.496 6.69 5.496a8.03 8.03 0 0 0 2.23-.316.679.679 0 0 1 .562.077l1.493.874a.257.257 0 0 0 .13.043.228.228 0 0 0 .228-.231c0-.057-.023-.113-.038-.167l-.306-1.161a.463.463 0 0 1 .167-.521c1.447-1.06 2.364-2.656 2.364-4.094 0-3.034-2.996-5.496-6.69-5.496h.13zm-2.34 3.158c.504 0 .912.415.912.926a.919.919 0 0 1-.912.926.919.919 0 0 1-.912-.926c0-.511.408-.926.912-.926zm4.681 0c.504 0 .912.415.912.926a.919.919 0 0 1-.912.926.919.919 0 0 1-.912-.926c0-.511.408-.926.912-.926z"/></svg>
-              微信一键登录
+              微信内打开登录
             </button>
             <button onclick="phoneLogin()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 text-gray-300 text-sm font-medium hover:bg-white/10 transition-all">
               <i data-lucide="smartphone" class="w-4 h-4"></i>
@@ -1472,7 +1488,16 @@ function initWxLogin() {
 
 function createWxQrCode() {
   const container = document.getElementById('wxLoginContainer');
-  if (!container || typeof WxLogin === 'undefined') return;
+  if (!container || typeof WxLogin === 'undefined') {
+    showWxLoginError('组件加载失败');
+    return;
+  }
+  // 检测是否在iframe中（微信登录SDK会在iframe中加载）
+  const isInIframe = window.self !== window.top;
+  if (isInIframe) {
+    // 如果在iframe中，可能是微信登录页面本身，不重复初始化
+    return;
+  }
   // 微信开放平台OAuth2.0二维码（需配置回调域名）
   const redirectUri = encodeURIComponent(window.location.origin + '/wx-callback.html');
   try {
@@ -1484,11 +1509,54 @@ function createWxQrCode() {
       redirect_uri: redirectUri,
       state: 'medaipro_' + Date.now(),
       style: 'black',
-      href: 'data:text/css;base64,' + btoa('.impowerBox .qrcode {width:180px;height:180px;margin:10px auto;}.impowerBox .title {display:none;}.impowerBox .info {display:none;}.impowerBox .status_browser {display:none;}')
+      href: ''
     });
     updateWxLoginStatus('loading', '二维码已加载，请使用微信扫码');
+    // 监听iframe加载错误
+    setTimeout(checkWxLoginError, 3000);
   } catch(e) {
-    updateWxLoginStatus('info', '微信登录组件加载中，请稍候...');
+    console.error('WxLogin init error:', e);
+    showWxLoginError('初始化失败');
+  }
+}
+
+// 检测微信登录是否出现错误（通过检查iframe内容）
+function checkWxLoginError() {
+  const container = document.getElementById('wxLoginContainer');
+  if (!container) return;
+  const iframe = container.querySelector('iframe');
+  if (iframe) {
+    // iframe已加载，但可能包含错误页面
+    try {
+      // 尝试访问iframe内容（跨域会失败，但可以检测是否加载完成）
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const bodyText = iframeDoc.body.innerText || '';
+      if (bodyText.includes('Scope') || bodyText.includes('权限') || bodyText.includes('错误')) {
+        showWxLoginError('Scope权限错误');
+      }
+    } catch(e) {
+      // 跨域无法访问，假设加载成功
+      console.log('WxLogin iframe loaded (cross-origin)');
+    }
+  } else {
+    // iframe未加载，可能出错
+    showWxLoginError('加载超时');
+  }
+}
+
+// 显示微信登录错误并提供解决方案
+function showWxLoginError(reason) {
+  const container = document.getElementById('wxLoginContainer');
+  if (!container) return;
+  container.innerHTML = '<div class="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100 flex flex-col items-center justify-center p-4 text-center"><svg class="w-12 h-12 mx-auto mb-2 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><div class="text-amber-700 text-xs font-medium mb-1">微信登录配置错误</div><div class="text-amber-600 text-[10px]">' + reason + '</div></div>';
+  updateWxLoginStatus('error', '请在微信中打开或使用其他方式登录');
+  // 显示详细帮助
+  const helpEl = document.getElementById('wxConfigHelp');
+  if (helpEl) {
+    helpEl.classList.remove('hidden');
+    // 更新回调域显示
+    const codeEl = helpEl.querySelector('code');
+    if (codeEl) codeEl.textContent = window.location.hostname;
   }
 }
 
