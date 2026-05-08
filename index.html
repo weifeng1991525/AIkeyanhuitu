@@ -2650,147 +2650,32 @@ function yuanToWan(yuan) {
   return wan % 1 === 0 ? wan.toString() : wan.toFixed(2).replace(/\.?0+$/, '');
 }
 
-// 创建明细行对象
-function makeLine(desc, unit, qty, yuan) {
-  return { desc, unit, qty, yuan, wan: yuanToWan(yuan) };
-}
-
-// 调整最后一行金额使总和等于目标
-function adjustLines(lines, targetYuan) {
-  let sum = 0;
-  for (let i = 0; i < lines.length - 1; i++) {
-    sum += lines[i].yuan;
-  }
-  const lastYuan = Math.max(0, targetYuan - sum);
-  lines[lines.length - 1].yuan = lastYuan;
-  lines[lines.length - 1].wan = yuanToWan(lastYuan);
-  return lines;
-}
-
-// 计算预算分配
+// 计算预算分配（严格按skill v4规则）
 function calcBudget(projectType, totalWan) {
   const totalYuan = totalWan * 10000;
-  
-  // 劳务费计算
-  let laborYuan;
+  let laborYuan, laborMonthly, laborCount;
   if (projectType === '地区基金' || projectType === '青年基金') {
-    laborYuan = 500 * 10 * 4 * 1; // 20000元
+    laborYuan = 500 * 10 * 4 * 1; laborMonthly = 500; laborCount = 1;
   } else if (totalWan <= 40) {
-    laborYuan = 500 * 10 * 4 * 1; // 20000元
+    laborYuan = 500 * 10 * 4 * 1; laborMonthly = 500; laborCount = 1;
   } else if (totalWan <= 50) {
-    laborYuan = 750 * 10 * 4 * 1; // 30000元
+    laborYuan = 750 * 10 * 4 * 1; laborMonthly = 750; laborCount = 1;
   } else {
-    laborYuan = 750 * 10 * 4 * 2; // 60000元
+    laborYuan = 750 * 10 * 4 * 2; laborMonthly = 750; laborCount = 2;
   }
-  
-  // 业务费 = 总额 - 劳务费
   const businessYuan = totalYuan - laborYuan;
-  
-  // 业务费各子项比例
   const isRegional = (projectType === '地区基金' || projectType === '青年基金');
-  const ratios = isRegional 
-    ? { animal: 0.091, reagent: 0.172, antibody: 0.162, consumable: 0.239, test: 0.205, travel: 0.046, publish: 0.085 }
+  const ratios = isRegional
+    ? { animal: 0.0909, reagent: 0.1724, antibody: 0.1618, consumable: 0.2394, test: 0.2052, travel: 0.0455, publish: 0.0848 }
     : { animal: 0.115, reagent: 0.158, antibody: 0.117, consumable: 0.200, test: 0.280, travel: 0.060, publish: 0.070 };
-  
-  // 各子项金额（向上取整到百元）
-  const subItems = {
-    animal: ceilHundred(businessYuan * ratios.animal),
-    reagent: ceilHundred(businessYuan * ratios.reagent),
-    antibody: ceilHundred(businessYuan * ratios.antibody),
-    consumable: ceilHundred(businessYuan * ratios.consumable),
-    test: ceilHundred(businessYuan * ratios.test),
-    travel: ceilHundred(businessYuan * ratios.travel),
-    publish: ceilHundred(businessYuan * ratios.publish)
-  };
-  
-  return { totalYuan, laborYuan, businessYuan, subItems, isRegional };
-}
-
-// 生成实验动物明细
-function genAnimalLines(targetYuan, isRegional) {
-  const lines = isRegional ? [
-    makeLine('C57BL/6J小鼠', '80元/只', 40, 80 * 40),
-    makeLine('BALB/c裸鼠', '150元/只', 30, 150 * 30),
-    makeLine('SD大鼠', '120元/只', 20, 120 * 20),
-    makeLine('自然衰老小鼠', '300元/只', 15, 300 * 15)
-  ] : [
-    makeLine('C57BL/6J小鼠', '80元/只', 60, 80 * 60),
-    makeLine('BALB/c裸鼠', '150元/只', 40, 150 * 40),
-    makeLine('基因工程小鼠', '500元/只', 30, 500 * 30),
-    makeLine('自然衰老小鼠', '300元/只', 20, 300 * 20)
-  ];
-  return adjustLines(lines, targetYuan);
-}
-
-// 生成分子试剂明细
-function genReagentLines(targetYuan, isRegional) {
-  const lines = isRegional ? [
-    makeLine('TRIzol试剂', '1500元/套', 8, 1500 * 8),
-    makeLine('逆转录试剂盒', '2000元/套', 6, 2000 * 6),
-    makeLine('qPCR试剂盒', '3000元/套', 5, 3000 * 5),
-    makeLine('慢病毒包装', '5000元/次', 4, 5000 * 4),
-    makeLine('siRNA合成', '800元/条', 10, 800 * 10)
-  ] : [
-    makeLine('TRIzol试剂', '1500元/套', 10, 1500 * 10),
-    makeLine('逆转录试剂盒', '2000元/套', 8, 2000 * 8),
-    makeLine('qPCR试剂盒', '3000元/套', 6, 3000 * 6),
-    makeLine('慢病毒包装', '5000元/次', 6, 5000 * 6),
-    makeLine('siRNA合成', '800元/条', 15, 800 * 15),
-    makeLine('Western Blot底物', '2500元/套', 4, 2500 * 4)
-  ];
-  return adjustLines(lines, targetYuan);
-}
-
-// 生成抗体明细
-function genAntibodyLines(targetYuan, isRegional) {
-  const lines = isRegional ? [
-    makeLine('Anti-GPX4', '3000元/支', 3, 3000 * 3),
-    makeLine('Anti-β-actin', '1500元/支', 4, 1500 * 4),
-    makeLine('Anti-p-ERK', '3500元/支', 2, 3500 * 2),
-    makeLine('Anti-4-HNE', '4000元/支', 2, 4000 * 2)
-  ] : [
-    makeLine('Anti-GPX4', '3000元/支', 4, 3000 * 4),
-    makeLine('Anti-β-actin', '1500元/支', 6, 1500 * 6),
-    makeLine('Anti-p-ERK', '3500元/支', 3, 3500 * 3),
-    makeLine('Anti-4-HNE', '4000元/支', 3, 4000 * 3),
-    makeLine('Anti-METTL1', '4500元/支', 2, 4500 * 2),
-    makeLine('Anti-m7G', '5000元/支', 2, 5000 * 2)
-  ];
-  return adjustLines(lines, targetYuan);
-}
-
-// 生成耗材明细
-function genConsumableLines(targetYuan, isRegional) {
-  const lines = isRegional ? [
-    makeLine('细胞培养耗材', '2000元/批', 10, 2000 * 10),
-    makeLine('流式检测耗材', '1500元/批', 8, 1500 * 8),
-    makeLine('电镜检测耗材', '3000元/批', 4, 3000 * 4),
-    makeLine('常规实验耗材', '1000元/批', 15, 1000 * 15)
-  ] : [
-    makeLine('细胞培养耗材', '2000元/批', 15, 2000 * 15),
-    makeLine('流式检测耗材', '1500元/批', 10, 1500 * 10),
-    makeLine('电镜检测耗材', '3000元/批', 6, 3000 * 6),
-    makeLine('m7G磁珠', '8000元/套', 3, 8000 * 3),
-    makeLine('常规实验耗材', '1000元/批', 20, 1000 * 20)
-  ];
-  return adjustLines(lines, targetYuan);
-}
-
-// 生成测试化验明细
-function genTestLines(targetYuan, isRegional) {
-  const lines = isRegional ? [
-    makeLine('RNA-seq测序', '5000元/样本', 6, 5000 * 6),
-    makeLine('Western Blot检测', '500元/次', 20, 500 * 20),
-    makeLine('病理切片HE染色', '100元/张', 50, 100 * 50),
-    makeLine('免疫组化检测', '200元/张', 30, 200 * 30)
-  ] : [
-    makeLine('scRNA-seq测序', '8000元/样本', 9, 8000 * 9),
-    makeLine('m7G-MeRIP-seq', '15000元/样本', 3, 15000 * 3),
-    makeLine('LC-MS/MS蛋白质谱', '12000元/样本', 4, 12000 * 4),
-    makeLine('Western Blot检测', '500元/次', 30, 500 * 30),
-    makeLine('病理切片HE染色', '100元/张', 60, 100 * 60)
-  ];
-  return adjustLines(lines, targetYuan);
+  const norm = Object.values(ratios).reduce((a,b) => a+b, 0);
+  const subItems = {};
+  for (const [k, r] of Object.entries(ratios)) {
+    subItems[k] = k === 'fuel' ? 0 : ceilHundred(businessYuan * (r / norm));
+  }
+  const actualBusiness = Object.values(subItems).reduce((a,b) => a+b, 0);
+  const actualTotal = actualBusiness + laborYuan;
+  return { totalYuan, laborYuan, laborMonthly, laborCount, businessYuan, actualBusiness, actualTotal, subItems, isRegional };
 }
 
 async function generateBudget() {
@@ -2799,261 +2684,273 @@ async function generateBudget() {
   const title = document.getElementById('budgetTitle').value.trim() || '国家自然科学基金项目';
   const content = document.getElementById('budgetContent').value.trim();
   const resultEl = document.getElementById('budgetResult');
-  
-  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">正在生成预算说明书...</p></div>`;
+
+  if (!content) { showToast('请填写研究内容概述', 'warning'); return; }
+
+  resultEl.innerHTML = '<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">正在计算预算并生成说明书...</p><p class="text-gray-500 text-xs mt-2">AI根据研究内容生成，预计需要30-60秒</p></div>';
 
   try {
-    // 计算预算分配
+    // 第一步：精确计算预算分配
     const budget = calcBudget(projectType, totalWan);
-    const { totalYuan, laborYuan, businessYuan, subItems, isRegional } = budget;
-    
-    // 生成各明细
-    const animalLines = genAnimalLines(subItems.animal, isRegional);
-    const reagentLines = genReagentLines(subItems.reagent, isRegional);
-    const antibodyLines = genAntibodyLines(subItems.antibody, isRegional);
-    const consumableLines = genConsumableLines(subItems.consumable, isRegional);
-    const testLines = genTestLines(subItems.test, isRegional);
-    
-    // 计算实际业务费总额
-    const actualBusiness = subItems.animal + subItems.reagent + subItems.antibody + subItems.consumable + subItems.test + subItems.travel + subItems.publish;
-    const actualTotal = actualBusiness + laborYuan;
-    
-    // 构建文档内容
+    const { laborYuan, laborMonthly, laborCount, actualBusiness, actualTotal, subItems, isRegional } = budget;
+
+    // 第二步：用AI根据研究内容生成各科目明细
+    const budgetSystemPrompt = `你是一位精通国家自然科学基金（NSFC）预算编制的科研财务专家。你需要根据用户的研究内容，生成预算说明书各科目的详细明细。
+
+【严格规则】
+1. 每个明细行的格式必须是："物品名称：单价元/单位×数量单位=X.XX万元，用途说明。"
+2. 万元值 = 单价(元) × 数量 ÷ 10000，必须精确计算，不能出错
+3. 每个科目所有明细行金额之和必须严格等于该科目的总额
+4. 最后一行的金额用于补齐差额，确保总和精确等于科目总额
+5. 内容必须与研究内容紧密相关，不能使用与研究无关的通用模板
+6. 所有文字使用仿宋_GB2312风格，简洁专业
+
+【输出格式】严格按以下格式输出，不要添加任何其他文字：
+===设备费===
+设备费：0万元，本单位已配备本研究所需的[根据研究内容列举3-5台相关仪器]，无需额外购置。
+===实验动物===
+（列出5-6行明细，最后一行补齐差额）
+===分子试剂===
+（列出8-10行明细，最后一行补齐差额）
+===抗体===
+（列出8-10行明细，最后一行补齐差额）
+===耗材===
+（列出6-8行明细，最后一行补齐差额）
+===测试化验===
+（列出6-8行明细，最后一行补齐差额）
+===燃料动力===
+（固定说明文字）
+===差旅会议===
+（说明文字）
+===出版费===
+（说明文字）
+===劳务费===
+（说明文字）`;
+
+    const budgetUserMessage = `项目类型：${projectType}
+申请金额：${totalWan}万元
+项目名称：${title}
+研究内容：${content}
+
+【各科目预算金额（必须严格遵守）】
+- 设备费：0万元
+- 实验动物及相关专用耗材：${yuanToWan(subItems.animal)}万元（${subItems.animal}元）
+- 分子生物学与实验专用试剂：${yuanToWan(subItems.reagent)}万元（${subItems.reagent}元）
+- 抗体：${yuanToWan(subItems.antibody)}万元（${subItems.antibody}元）
+- 实验通用与专用耗材：${yuanToWan(subItems.consumable)}万元（${subItems.consumable}元）
+- 测试化验加工费：${yuanToWan(subItems.test)}万元（${subItems.test}元）
+- 燃料动力费：0万元
+- 差旅/会议/国际合作与交流费：${yuanToWan(subItems.travel)}万元（${subItems.travel}元）
+- 出版/文献/信息传播/知识产权事务费：${yuanToWan(subItems.publish)}万元（${subItems.publish}元）
+- 劳务费：${yuanToWan(laborYuan)}万元（${laborMonthly}元/月×10月×4年×${laborCount}人）
+
+请根据以上研究内容和各科目金额，生成详细的预算明细。每个科目的明细行金额之和必须精确等于该科目的总额。`;
+
+    const aiResult = await callChatAPI(budgetSystemPrompt, budgetUserMessage);
+
+    // 第三步：解析AI返回的各科目内容
+    function extractSection(text, name) {
+      const regex = new RegExp('===' + name + '===\\s*\\n([\\s\\S]*?)(?=\\n===|$)');
+      const m = text.match(regex);
+      return m ? m[1].trim() : '';
+    }
+
+    const equipmentText = extractSection(aiResult, '设备费');
+    const animalText = extractSection(aiResult, '实验动物');
+    const reagentText = extractSection(aiResult, '分子试剂');
+    const antibodyText = extractSection(aiResult, '抗体');
+    const consumableText = extractSection(aiResult, '耗材');
+    const testText = extractSection(aiResult, '测试化验');
+    const fuelText = extractSection(aiResult, '燃料动力');
+    const travelText = extractSection(aiResult, '差旅会议');
+    const publishText = extractSection(aiResult, '出版费');
+    const laborText = extractSection(aiResult, '劳务费');
+
+    // 第四步：构建Word文档内容（严格按NSFC模板格式）
     const paras = [];
-    
-    // 标题
+
+    // 大标题
     paras.push({ text: '1.科学基金资助项目直接费用', bold: true });
-    paras.push({ text: '请按照《国家自然科学基金项目申请书预算编制说明》填写。', bold: true });
+    paras.push({ text: '请按照《国家自然科学基金项目申请书预算编制说明》等有关要求，按照政策相符性、目标相关性和经济合理性原则，实事求是编制项目预算。填报时，每个科目应结合科研任务按支出用途进行基本测算说明。', bold: true });
     paras.push({ text: '' });
-    paras.push({ text: `本课题申请国家自然科学基金资助${yuanToWan(actualTotal)}万元，各项支出预算如下：` });
-    
+    paras.push({ text: '本课题申请国家自然科学基金资助' + yuanToWan(actualTotal) + '万元，各项支出预算如下：' });
+
     // 1.1 设备费
-    paras.push({ text: '1.1设备费（是指在项目实施过程中购置或试制专用仪器设备，对现有仪器设备进行升级改造，以及租赁外单位仪器设备而发生的费用。)', inherit: true });
-    paras.push({ text: '设备费：0万元，本单位已配备本课题所需的主要仪器设备，包括PCR仪、Western Blot系统、流式细胞仪、荧光显微镜等，能够满足本课题研究需要。' });
-    
+    paras.push({ text: '1.1设备费（是指在项目实施过程中购置或试制专用仪器设备，对现有仪器设备进行升级改造，以及租赁外单位仪器设备而发生的费用。计算类仪器设备和软件工具可在设备费科目列支。填报时，应按照设备购置费、试制改造费和租赁使用费的分类，提供设备支出的必要性及基本测算说明。单价大于50万元（含50万元）的设备需补充说明设备的主要性能指标、主要技术参数等内容。）', inherit: true });
+    paras.push({ text: equipmentText || '设备费：0万元，本单位已配备本研究所需的主要仪器设备，能够满足本课题研究需要。' });
+
     // 1.2 业务费
-    paras.push({ text: '1.2业务费（是指项目实施过程中消耗的各种耗材、测试化验加工、燃料动力、差旅/会议/国际合作与交流、出版/文献/信息传播/知识产权事务等费用。)', inherit: true });
-    paras.push({ text: `业务费：${yuanToWan(actualBusiness)}万元` });
-    
+    paras.push({ text: '1.2业务费（是指项目实施过程中消耗的各种材料、辅助材料等低值易耗品的采购、运输、装卸、整理等费用，发生的测试化验加工、燃料动力、出版/文献/信息传播/知识产权事务、会议/差旅/国际合作交流等费用，以及其他相关支出。填报时，应按照支出大类进行基本测算说明。）', inherit: true });
+    paras.push({ text: '业务费：' + yuanToWan(actualBusiness) + '万元' });
+
     // (1) 实验动物
-    paras.push({ text: `（1）实验动物及相关专用耗材：${yuanToWan(subItems.animal)}万元` });
-    animalLines.forEach(l => {
-      const unit = l.desc.includes('小鼠') || l.desc.includes('大鼠') ? '只' : '批';
-      paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${unit}=${l.wan}万元` });
-    });
-    
+    paras.push({ text: '（1）实验动物及相关专用耗材：' + yuanToWan(subItems.animal) + '万元' });
+    if (animalText) animalText.split('\n').filter(l => l.trim()).forEach(l => paras.push({ text: l.trim() }));
+
     // (2) 分子试剂
-    paras.push({ text: `（2）分子生物学与实验专用试剂：${yuanToWan(subItems.reagent)}万元` });
-    reagentLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}套=${l.wan}万元` }));
-    
+    paras.push({ text: '（2）分子生物学与实验专用试剂：' + yuanToWan(subItems.reagent) + '万元' });
+    if (reagentText) reagentText.split('\n').filter(l => l.trim()).forEach(l => paras.push({ text: l.trim() }));
+
     // (3) 抗体
-    paras.push({ text: `（3）抗体：${yuanToWan(subItems.antibody)}万元` });
-    antibodyLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}支=${l.wan}万元` }));
-    
+    paras.push({ text: '（3）抗体：' + yuanToWan(subItems.antibody) + '万元' });
+    if (antibodyText) antibodyText.split('\n').filter(l => l.trim()).forEach(l => paras.push({ text: l.trim() }));
+
     // (4) 耗材
-    paras.push({ text: `（4）实验通用与专用耗材：${yuanToWan(subItems.consumable)}万元` });
-    consumableLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}批=${l.wan}万元` }));
-    
+    paras.push({ text: '（4）实验通用与专用耗材：' + yuanToWan(subItems.consumable) + '万元' });
+    if (consumableText) consumableText.split('\n').filter(l => l.trim()).forEach(l => paras.push({ text: l.trim() }));
+
     // (5) 测试化验
-    paras.push({ text: `（5）测试化验加工费：${yuanToWan(subItems.test)}万元` });
-    testLines.forEach(l => {
-      const unit = l.desc.includes('染色') ? '张' : (l.desc.includes('检测') ? '次' : '样本');
-      paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${unit}=${l.wan}万元` });
-    });
-    
+    paras.push({ text: '（5）测试化验加工费：' + yuanToWan(subItems.test) + '万元' });
+    if (testText) testText.split('\n').filter(l => l.trim()).forEach(l => paras.push({ text: l.trim() }));
+
     // (6) 燃料动力
     paras.push({ text: '（6）燃料动力费：0万元' });
-    paras.push({ text: '  燃料动力费由本单位承担，不列入本项目预算。' });
-    
+    paras.push({ text: fuelText || '本项目实验研究的水电、仪器设备能耗等均纳入单位日常运营成本，无需单独计量支付。' });
+
     // (7) 差旅会议
-    paras.push({ text: `（7）差旅/会议/国际合作与交流费：${yuanToWan(subItems.travel)}万元` });
-    paras.push({ text: `  用于参加国内外学术会议、开展合作交流等，预计${Math.ceil(subItems.travel / 5000)}人次。` });
-    
+    paras.push({ text: '（7）差旅/会议/国际合作与交流费：' + yuanToWan(subItems.travel) + '万元' });
+    paras.push({ text: travelText || '用于项目组成员参加相关国内学术会议，含会议注册费、往返交通费、住宿费等。' });
+
     // (8) 出版费
-    paras.push({ text: `（8）出版/文献/信息传播/知识产权事务费：${yuanToWan(subItems.publish)}万元；` });
-    paras.push({ text: '  用于发表SCI论文版面费、文献检索及知识产权申请等。' });
-    
+    paras.push({ text: '（8）出版/文献/信息传播/知识产权事务费：' + yuanToWan(subItems.publish) + '万元；' });
+    paras.push({ text: publishText || '用于发表SCI论文版面费、文献检索及知识产权申请等。' });
+
     // 1.3 劳务费
-    paras.push({ text: '1.3劳务费（是指在项目实施过程中支付给参与项目的研究生、博士后、访问学者以及项目聘用的研究人员、科研辅助人员等的劳务性费用；以及支付给临时聘请的咨询专家的费用等。)', inherit: true });
-    paras.push({ text: `劳务费：${yuanToWan(laborYuan)}万元` });
-    const laborMonthly = isRegional ? 500 : 750;
-    paras.push({ text: `  支付1名硕士研究生助研津贴：${laborMonthly}元/月×10月×4年×1人=${yuanToWan(laborYuan)}万元。该研究生全程负责细胞培养、分子生物学实验、动物实验及数据分析等核心工作。` });
-    
+    paras.push({ text: '1.3劳务费（是指在项目实施过程中支付给参与项目研究的研究生、博士后、访问学者以及项目聘用的研究人员、科研辅助人员等的劳务性费用，以及支付给临时聘请的咨询专家的费用等。填报时，应综合考量劳务费支出对象所承担研究任务的必要性、投入本项目的工作时长、费用标准的合理性等因素，按照人员类别进行基本测算说明。专家咨询费应按照国家有关规定执行。）', inherit: true });
+    paras.push({ text: '劳务费：' + yuanToWan(laborYuan) + '万元' });
+    paras.push({ text: laborText || ('支付' + laborCount + '名硕士研究生助研津贴：' + laborMonthly + '元/月×10月×4年×' + laborCount + '人=' + yuanToWan(laborYuan) + '万元。该研究生全程负责实验操作、样本处理、数据整理与分析等核心工作。') });
+
     // 2. 合作转拨
     paras.push({ text: '2.直接费用中合作研究转拨资金', bold: true });
-    paras.push({ text: '如存在合作研究单位，需说明转拨金额及用途。', inherit: true });
-    paras.push({ text: '无' });
-    
-    // 3. 其他来源
-    paras.push({ text: '3.其他来源资金', bold: true });
-    paras.push({ text: '如有其他来源资金，需说明来源及金额。', inherit: true });
+    paras.push({ text: '需对合作研究单位承担的研究任务做必要说明。直接费用转拨资金需经项目申请人与参与者协商一致，并按设备费、业务费、劳务费三个科目做预算说明。如存在多个合作研究单位，请分单位逐一说明。', inherit: true });
     paras.push({ text: '无' });
 
-    // 生成Word文档
+    // 3. 其他来源
+    paras.push({ text: '3.其他来源资金', bold: true });
+    paras.push({ text: '对其他来源资金的资金来源、资金具体开支用途做简要说明。', inherit: true });
+    paras.push({ text: '无' });
+
+    // 第五步：生成Word文档（仿宋_GB2312，9pt，首行缩进2字符）
     let htmlContent = paras.map(p => {
       const escaped = (p.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (!escaped) return '<p style="font-family:FangSong_GB2312,仿宋_GB2312,仿宋,FangSong,serif;font-size:9pt;margin:0;padding:0;line-height:1.5;">&nbsp;</p>';
       if (p.bold) {
-        return `<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">${escaped}</p>`;
+        return '<p style="font-family:FangSong_GB2312,仿宋_GB2312,仿宋,FangSong,serif;font-size:9pt;font-weight:bold;margin:0;padding:0;line-height:1.5;text-indent:360twips;">' + escaped + '</p>';
       }
-      return `<p style="margin:0;padding:0;line-height:1.5;text-indent:2em;">${escaped}</p>`;
+      if (p.inherit) {
+        return '<p style="font-family:FangSong_GB2312,仿宋_GB2312,仿宋,FangSong,serif;font-size:9pt;margin:0;padding:0;line-height:1.5;text-indent:360twips;">' + escaped + '</p>';
+      }
+      return '<p style="font-family:FangSong_GB2312,仿宋_GB2312,仿宋,FangSong,serif;font-size:9pt;margin:0;padding:0;line-height:1.5;text-indent:360twips;">' + escaped + '</p>';
     }).join('');
-    
-    const blob = generateWordBlob(htmlContent, `NSFC预算说明书_${projectType}_${totalWan}万`);
-    downloadBlob(blob, `NSFC预算说明书_${projectType}_${totalWan}万_${new Date().toISOString().slice(0,10)}.doc`);
-    
-    resultEl.innerHTML = `
-      <div class="text-center py-10">
-        <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-400"></i>
-        <p class="text-white font-medium mb-2">预算说明书已生成</p>
-        <div class="text-sm text-gray-400 space-y-1 mt-4">
-          <p>基金类型：<span class="text-white">${projectType}</span></p>
-          <p>设定金额：<span class="text-white">${totalWan}万元</span></p>
-          <p>实际总费用：<span class="text-green-400">${yuanToWan(actualTotal)}万元</span></p>
-          <p>业务费：<span class="text-white">${yuanToWan(actualBusiness)}万元</span></p>
-          <p>劳务费：<span class="text-white">${yuanToWan(laborYuan)}万元</span></p>
-        </div>
-        <button onclick="generateBudget()" class="mt-6 px-6 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 text-sm font-medium hover:bg-rose-500/30 transition-all">
-          重新生成
-        </button>
-      </div>`;
+
+    const fullHtml = '<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"><meta name=ProgId content=Word.Document><title>NSFC预算说明书</title><style>@page{size:21cm 29.7cm;margin:2.54cm 3.17cm;}body{font-family:FangSong_GB2312,仿宋_GB2312,仿宋,FangSong,serif;font-size:9pt;line-height:1.5;}</style></head><body>' + htmlContent + '</body></html>';
+    const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'NSFC预算说明书_' + projectType + '_' + totalWan + '万_' + new Date().toISOString().slice(0,10) + '.doc';
+    link.click();
+
+    resultEl.innerHTML = '<div class="text-center py-10"><i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-400"></i><p class="text-white font-medium mb-2">预算说明书已生成并下载</p><div class="text-sm text-gray-400 space-y-1 mt-4"><p>基金类型：<span class="text-white">' + projectType + '</span></p><p>设定金额：<span class="text-white">' + totalWan + '万元</span></p><p>实际总费用：<span class="text-green-400">' + yuanToWan(actualTotal) + '万元</span>（≥设定金额）</p><p>设备费：<span class="text-white">0万元</span></p><p>业务费：<span class="text-white">' + yuanToWan(actualBusiness) + '万元</span></p><p>劳务费：<span class="text-white">' + yuanToWan(laborYuan) + '万元</span></p></div><div class="mt-4 text-xs text-gray-500"><p>实验动物：' + yuanToWan(subItems.animal) + '万 | 试剂：' + yuanToWan(subItems.reagent) + '万 | 抗体：' + yuanToWan(subItems.antibody) + '万</p><p>耗材：' + yuanToWan(subItems.consumable) + '万 | 测试化验：' + yuanToWan(subItems.test) + '万 | 差旅：' + yuanToWan(subItems.travel) + '万 | 出版：' + yuanToWan(subItems.publish) + '万</p></div><button onclick="generateBudget()" class="mt-6 px-6 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 text-sm font-medium hover:bg-rose-500/30 transition-all">重新生成</button></div>';
     setTimeout(() => lucide.createIcons(), 50);
     showToast('预算说明书Word文档已下载');
   } catch (e) {
-    resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">${e.message}</p></div>`;
+    resultEl.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">' + e.message + '</p><button onclick="generateBudget()" class="mt-4 px-4 py-2 rounded-lg bg-rose-500/20 text-rose-400 text-xs hover:bg-rose-500/30">重试</button></div>';
     setTimeout(() => lucide.createIcons(), 50);
     showToast('生成失败: ' + e.message, 'error');
   }
 }
 
 // ==================== ABSTRACT GENERATOR ====================
+// 智能缩减中文摘要到400字符（保持句子完整、语义连贯）
+function smartTruncateAbstract(text, maxLen) {
+  if (text.length <= maxLen) return text;
+  let s = text;
+  // 第1轮：去除冗余修饰词
+  s = s.replace(/非常|十分|极其|相当|特别|尤其|显著地|明显地/g, '');
+  if (s.length <= maxLen) return s;
+  // 第2轮：合并重复表述
+  s = s.replace(/通过本研究|本研究|本项目/g, '本研究');
+  s = s.replace(/结果表明[^，。；]*?[，。]/g, (m) => m.replace(/我们发现|研究发现|实验证实|结果显示/g, '证实'));
+  if (s.length <= maxLen) return s;
+  // 第3轮：按句子截断，保持完整
+  let cutPoint = maxLen;
+  while (cutPoint > 200 && s[cutPoint] !== '。' && s[cutPoint] !== '；' && s[cutPoint] !== '，') {
+    cutPoint--;
+  }
+  if (cutPoint > 200) {
+    s = s.substring(0, cutPoint + 1);
+  } else {
+    s = s.substring(0, maxLen - 1) + '。';
+  }
+  return s;
+}
+
 async function generateAbstract() {
   const input = document.getElementById('abstractInput').value.trim();
   const field = document.getElementById('abstractField').value;
   const fundType = document.getElementById('abstractFundType').value;
   if (!input) { showToast('请填写项目说明', 'warning'); return; }
   const resultEl = document.getElementById('abstractResult');
-  resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成题目与摘要...</p><p class="text-gray-500 text-xs mt-2">预计需要30-60秒</p></div>`;
+  resultEl.innerHTML = '<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">AI正在生成题目与摘要...</p><p class="text-gray-500 text-xs mt-2">预计需要30-60秒</p></div>';
 
-  const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）申请书撰写专家。请根据用户提供的项目说明，生成中英文题目、摘要和关键词。
+  const systemPrompt = '你是一位资深的国家自然科学基金（NSFC）申请书撰写专家。请根据用户提供的项目说明，生成中英文题目、摘要和关键词。\n\n【硬性要求·最高优先级】\n中文摘要必须严格控制在400个字符以内（含标点符号）。在动笔前先估算字数，确保不超过400字符。如果内容较多，优先精简研究内容部分（保留2-3个关键实验方法），删减修饰性描述。\n\n格式要求：\n1. 中文题目：20字以内，简洁精准，避免"研究""探讨"等泛词\n2. 英文题目：与中文对应，纯英文，符合SCI论文命名习惯\n3. 中文摘要：严格≤400字符，一段连续文字（不分段、不编号），结构：临床难点(1句)+前期基础(1句)+假说(1句)+研究内容(2句)+意义(1句)\n4. 英文摘要：纯英文，与中文摘要结构对应，200词以内\n5. 中文关键词：5个，用中文分号"；"分隔\n6. 英文关键词：5个，与中文对应，用英文分号"; "分隔\n\n输出格式（严格按此格式，不要添加任何其他文字）：\n===中文题目===\nXXX\n\n===英文题目===\nXXX\n\n===中文摘要===\nXXX\n\n===英文摘要===\nXXX\n\n===中文关键词===\nXXX；XXX；XXX；XXX；XXX\n\n===英文关键词===\nXXX; XXX; XXX; XXX; XXX';
 
-【最重要】中文摘要必须严格控制在400个字符以内（含标点），这是硬性要求，超出将被拒绝。
-
-格式要求：
-1. 中文题目：20字以内，简洁精准，避免"研究""探讨"等泛词
-2. 英文题目：与中文对应，纯英文，符合SCI论文命名习惯
-3. 中文摘要：严格不超过400字符，一段连续文字，结构：临床难点(1-2句)+科学问题(1句)+假说(1句)+研究内容(2-3句)+意义(1句)
-4. 英文摘要：纯英文，与中文摘要结构对应，200词以内
-5. 中文关键词：5个，用中文分号"；"分隔
-6. 英文关键词：5个，与中文对应，用英文分号"; "分隔
-
-输出格式（严格按此格式）：
-===中文题目===
-XXX
-
-===英文题目===
-XXX
-
-===中文摘要===
-XXX
-
-===英文摘要===
-XXX
-
-===中文关键词===
-XXX；XXX；XXX；XXX；XXX
-
-===英文关键词===
-XXX; XXX; XXX; XXX; XXX`;
-
-  const userMessage = `学科领域：${field}\n基金类型：${fundType}\n项目说明：${input}\n\n【提醒】中文摘要必须严格控制在400字符以内！`;
+  const userMessage = '学科领域：' + field + '\n基金类型：' + fundType + '\n项目说明：' + input + '\n\n【再次提醒】中文摘要绝对不能超过400个字符（含标点）。请先在心里数一下字数再输出。';
 
   try {
     const result = await callChatAPI(systemPrompt, userMessage);
     const sections = {};
     const sectionNames = ['中文题目','英文题目','中文摘要','英文摘要','中文关键词','英文关键词'];
     sectionNames.forEach(name => {
-      const regex = new RegExp(`===${name}===\\s*\\n([\\s\\S]*?)(?=\\n===|$)`);
+      const regex = new RegExp('===' + name + '===\\s*\\n([\\s\\S]*?)(?=\\n===|$)');
       const match = result.match(regex);
       sections[name] = match ? match[1].trim() : '';
     });
 
-    // 自动缩减中文摘要到400字符
+    // 智能缩减中文摘要到400字符
+    const originalLen = sections['中文摘要'].length;
+    sections['中文摘要'] = smartTruncateAbstract(sections['中文摘要'], 400);
+
+    // 如果缩减后仍然超限（极端情况），用AI二次精简
     if (sections['中文摘要'].length > 400) {
-      const original = sections['中文摘要'];
-      // 智能缩减：保留核心内容
-      let shortened = original;
-      // 先尝试去掉修饰词
-      shortened = shortened.replace(/非常|十分|极其|相当|特别|尤其/g, '');
-      shortened = shortened.replace(/通过本研究|本研究|本项目/g, '本研究');
-      shortened = shortened.replace(/结果表明|研究发现|实验证实/g, '证实');
-      // 如果还超，直接截断并保持句子完整
-      if (shortened.length > 400) {
-        // 找到第400字符前最后一个句号
-        let cutPoint = 400;
-        while (cutPoint > 300 && shortened[cutPoint] !== '。' && shortened[cutPoint] !== '；') {
-          cutPoint--;
-        }
-        if (cutPoint > 300) {
-          shortened = shortened.substring(0, cutPoint + 1);
-        } else {
-          shortened = shortened.substring(0, 397) + '...';
-        }
+      const refineResult = await callChatAPI(
+        '你是一个文本精简专家。请将以下中文摘要精简到400字符以内（含标点），保持核心语义不变，保留五段结构（临床难点+前期+假说+研究内容+意义），输出精简后的纯文本，不要添加任何其他文字。',
+        '原文（' + sections['中文摘要'].length + '字符）：' + sections['中文摘要']
+      );
+      const refined = refineResult.trim();
+      if (refined.length <= 400 && refined.length > 100) {
+        sections['中文摘要'] = refined;
+      } else {
+        // 最终兜底：强制截断
+        sections['中文摘要'] = sections['中文摘要'].substring(0, 397) + '。';
       }
-      sections['中文摘要'] = shortened;
     }
+
+    // 最终验证
+    const finalLen = sections['中文摘要'].length;
+    const isOk = finalLen <= 400;
 
     // Quality checks
     const warnings = [];
-    if (sections['中文摘要'].length > 400) {
-      warnings.push(`中文摘要${sections['中文摘要'].length}字符，已自动缩减`);
-    }
+    if (!isOk) warnings.push('中文摘要' + finalLen + '字符，超出400限制');
+    if (originalLen > 400 && isOk) warnings.push('中文摘要已从' + originalLen + '字符缩减至' + finalLen + '字符');
     if (/[\u4e00-\u9fff]/.test(sections['英文题目'])) warnings.push('英文题目含中文字符');
     if (/[\u4e00-\u9fff]/.test(sections['英文摘要'])) warnings.push('英文摘要含中文字符');
 
     window._abstractData = sections;
 
-    const warningHtml = warnings.length > 0 
-      ? `<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4"><div class="text-xs text-amber-400 font-medium mb-1">⚠️ 提示</div>${warnings.map(w => `<div class="text-xs text-amber-300">${w}</div>`).join('')}</div>` 
+    const warningHtml = warnings.length > 0
+      ? '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4"><div class="text-xs text-amber-400 font-medium mb-1">提示</div>' + warnings.map(w => '<div class="text-xs text-amber-300">' + w + '</div>').join('') + '</div>'
       : '';
 
-    resultEl.innerHTML = `
-      <div class="animate-fade-in space-y-4">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> 生成结果</h3>
-          <button onclick="downloadAbstractDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载Word</button>
-        </div>
-        ${warningHtml}
-        <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">中文题目 <span class="text-gray-500">(${sections['中文题目'].length}字)</span></div>
-            <div class="text-sm text-white font-medium">${escapeHtml(sections['中文题目'] || '未生成')}</div>
-          </div>
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">英文题目</div>
-            <div class="text-sm text-white">${escapeHtml(sections['英文题目'] || '未生成')}</div>
-          </div>
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">中文摘要 <span class="${sections['中文摘要'].length > 400 ? 'text-red-400' : 'text-green-400'}">${sections['中文摘要'].length}/400字符 ✓</span></div>
-            <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections['中文摘要'] || '未生成')}</div>
-          </div>
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">英文摘要</div>
-            <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections['英文摘要'] || '未生成')}</div>
-          </div>
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">中文关键词</div>
-            <div class="text-sm text-gray-300">${escapeHtml(sections['中文关键词'] || '未生成')}</div>
-          </div>
-          <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">英文关键词</div>
-            <div class="text-sm text-gray-300">${escapeHtml(sections['英文关键词'] || '未生成')}</div>
-          </div>
-        </div>
-      </div>`;
+    const lenColor = isOk ? 'text-green-400' : 'text-red-400';
+    const lenIcon = isOk ? '✓' : '✗ 超出限制';
+
+    resultEl.innerHTML = '<div class="animate-fade-in space-y-4"><div class="flex items-center justify-between mb-2"><h3 class="text-sm font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> 生成结果</h3><button onclick="downloadAbstractDOCX()" class="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-all flex items-center gap-1"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> 下载Word</button></div>' + warningHtml + '<div class="space-y-3 max-h-[500px] overflow-y-auto pr-2"><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">中文题目 <span class="text-gray-500">(' + (sections['中文题目'] || '').length + '字)</span></div><div class="text-sm text-white font-medium">' + escapeHtml(sections['中文题目'] || '未生成') + '</div></div><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">英文题目</div><div class="text-sm text-white">' + escapeHtml(sections['英文题目'] || '未生成') + '</div></div><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">中文摘要 <span class="' + lenColor + '">' + finalLen + '/400字符 ' + lenIcon + '</span></div><div class="text-sm text-gray-300 leading-relaxed">' + escapeHtml(sections['中文摘要'] || '未生成') + '</div></div><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">英文摘要</div><div class="text-sm text-gray-300 leading-relaxed">' + escapeHtml(sections['英文摘要'] || '未生成') + '</div></div><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">中文关键词</div><div class="text-sm text-gray-300">' + escapeHtml(sections['中文关键词'] || '未生成') + '</div></div><div class="bg-navy-800/50 rounded-xl p-4"><div class="text-xs text-cyan-400 mb-1">英文关键词</div><div class="text-sm text-gray-300">' + escapeHtml(sections['英文关键词'] || '未生成') + '</div></div></div></div>';
     setTimeout(() => lucide.createIcons(), 50);
     showToast('题目摘要生成完成');
   } catch (e) {
-    resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">${e.message}</p></div>`;
+    resultEl.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i data-lucide="alert-circle" class="w-12 h-12 text-red-400 mb-4"></i><p class="text-red-400 text-sm">生成失败</p><p class="text-gray-500 text-xs mt-1">' + e.message + '</p></div>';
     setTimeout(() => lucide.createIcons(), 50);
     showToast('生成失败: ' + e.message, 'error');
   }
@@ -3064,22 +2961,14 @@ async function downloadAbstractDOCX() {
   if (!d['中文题目']) { showToast('请先生成题目摘要', 'warning'); return; }
 
   try {
-    // Build HTML content matching skill template
-    const htmlContent = `
-<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">题目：${escapeHtml(d['中文题目'] || '')}</p>
-<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
-<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
-<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">摘要：</span>${escapeHtml(d['中文摘要'] || '')}</p>
-<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">关键词：</span>${escapeHtml(d['中文关键词'] || '')}</p>
-<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
-<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">Title: ${escapeHtml(d['英文题目'] || '')}</p>
-<p style="margin:0;padding:0;line-height:1.5;">&nbsp;</p>
-<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">Abstract: </span>${escapeHtml(d['英文摘要'] || '')}</p>
-<p style="margin:0;padding:0;line-height:1.5;"><span style="font-weight:bold;">Keywords: </span>${escapeHtml(d['英文关键词'] || '')}</p>
-`;
+    const htmlContent = '<p style="font-family:SimSun,宋体,Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">题目：' + escapeHtml(d['中文题目'] || '') + '</p><p style="margin:0;padding:0;line-height:360%;">&nbsp;</p><p style="margin:0;padding:0;line-height:360%;">&nbsp;</p><p style="font-family:SimSun,宋体,Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">摘要：</p><p style="font-family:SimSun,宋体,Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">' + escapeHtml(d['中文摘要'] || '') + '</p><p style="font-family:SimSun,宋体,Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">关键词：' + escapeHtml(d['中文关键词'] || '') + '</p><p style="margin:0;padding:0;line-height:360%;">&nbsp;</p><p style="font-family:Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">Title: ' + escapeHtml(d['英文题目'] || '') + '</p><p style="margin:0;padding:0;line-height:360%;">&nbsp;</p><p style="font-family:Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">Abstract: ' + escapeHtml(d['英文摘要'] || '') + '</p><p style="font-family:Times New Roman,serif;font-size:12pt;font-weight:bold;margin:0;padding:0;line-height:360%;">Keywords: ' + escapeHtml(d['英文关键词'] || '') + '</p>';
 
-    const blob = generateWordBlob(htmlContent, '题目摘要关键词');
-    downloadBlob(blob, `题目摘要关键词_${new Date().toISOString().slice(0,10)}.doc`);
+    const fullHtml = '<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"><meta name=ProgId content=Word.Document><title>题目摘要关键词</title><style>@page{size:21cm 29.7cm;margin:2.54cm 3.17cm;}body{font-family:SimSun,宋体,Times New Roman,serif;font-size:12pt;}</style></head><body>' + htmlContent + '</body></html>';
+    const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '题目摘要关键词_' + new Date().toISOString().slice(0,10) + '.doc';
+    link.click();
     showToast('Word文档已下载');
   } catch (e) {
     console.error('DOCX generation error:', e);
