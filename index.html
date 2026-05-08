@@ -593,19 +593,19 @@ body { font-family: 'DM Sans', sans-serif; background: #0A1628; color: #E2E8F0; 
               <div>
                 <label class="block text-xs text-gray-400 mb-2">尺寸</label>
                 <select id="customSize" class="w-full bg-navy-800/50 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-teal-500/50">
-                  <optgroup label="纵向">
-                    <option value="1024x1536" selected>1024x1536 (3:4)</option>
-                    <option value="768x1024">768x1024 (3:4)</option>
-                    <option value="864x1536">864x1536 (9:16)</option>
+                  <optgroup label="纵向（竖版）">
+                    <option value="1024x1536" selected>1024x1536 (2:3)</option>
+                    <option value="2160x3840">2160x3840 (9:16 最高清)</option>
+                    <option value="1536x2048">1536x2048 (3:4)</option>
                   </optgroup>
-                  <optgroup label="横向">
-                    <option value="1024x768">1024x768 (4:3)</option>
-                    <option value="1024x1024">1024x1024 (1:1)</option>
-                    <option value="1152x768">1152x768 (3:2)</option>
-                  </optgroup>
-                  <optgroup label="宽屏">
+                  <optgroup label="横向（横版）">
+                    <option value="1536x1024">1536x1024 (3:2)</option>
+                    <option value="3840x2160">3840x2160 (16:9 最高清)</option>
                     <option value="2048x1152">2048x1152 (16:9)</option>
-                    <option value="1536x1024">1536x1024</option>
+                  </optgroup>
+                  <optgroup label="方形">
+                    <option value="1024x1024">1024x1024 (1:1)</option>
+                    <option value="2048x2048">2048x2048 (1:1 高清)</option>
                   </optgroup>
                 </select>
               </div>
@@ -1446,7 +1446,7 @@ async function callImageAPI(userContent, prefixPrompt, size, quality) {
     const resp = await fetch(IMG_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + IMG_API_KEY },
-      body: JSON.stringify({ model: IMG_MODEL, prompt: fullPrompt, size: size, quality: quality || 'high', n: 1 })
+      body: JSON.stringify({ model: IMG_MODEL, prompt: fullPrompt, size: size, quality: quality || 'high', n: 1, output_format: 'png' })
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || 'API Error');
@@ -1864,7 +1864,7 @@ async function callImageAPICustom(userContent, prefixPrompt, size, quality, mode
   const resp = await fetch(IMG_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + IMG_API_KEY },
-    body: JSON.stringify({ model: model, prompt: fullPrompt, size: size, quality: quality, n: 1 })
+    body: JSON.stringify({ model: model, prompt: fullPrompt, size: size, quality: quality, n: 1, output_format: 'png' })
   });
   const data = await resp.json();
   if (data.error) throw new Error(data.error.message || 'API Error');
