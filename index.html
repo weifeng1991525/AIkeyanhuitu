@@ -2638,41 +2638,62 @@ function updateBudgetAmount() {
   amountInput.value = amounts[type] || 47;
 }
 
+// 向上取整到百元
 function ceilHundred(x) {
   return Math.ceil(x / 100) * 100;
 }
 
-function yuanToWanStr(yuan) {
+// 元转万元字符串
+function yuanToWan(yuan) {
+  if (yuan === 0) return '0';
   const wan = yuan / 10000;
-  if (wan === Math.floor(wan)) return wan.toString();
-  return wan.toFixed(2).replace(/\.?0+$/, '');
+  return wan % 1 === 0 ? wan.toString() : wan.toFixed(2).replace(/\.?0+$/, '');
 }
 
-function getBudgetAllocation(projectType, totalYuan) {
-  const totalWan = totalYuan / 10000;
-  let laborYuan = 0;
+// 创建明细行对象
+function makeLine(desc, unit, qty, yuan) {
+  return { desc, unit, qty, yuan, wan: yuanToWan(yuan) };
+}
+
+// 调整最后一行金额使总和等于目标
+function adjustLines(lines, targetYuan) {
+  let sum = 0;
+  for (let i = 0; i < lines.length - 1; i++) {
+    sum += lines[i].yuan;
+  }
+  const lastYuan = Math.max(0, targetYuan - sum);
+  lines[lines.length - 1].yuan = lastYuan;
+  lines[lines.length - 1].wan = yuanToWan(lastYuan);
+  return lines;
+}
+
+// 计算预算分配
+function calcBudget(projectType, totalWan) {
+  const totalYuan = totalWan * 10000;
+  
+  // 劳务费计算
+  let laborYuan;
   if (projectType === '地区基金' || projectType === '青年基金') {
-    laborYuan = 500 * 10 * 4 * 1; // 20000
+    laborYuan = 500 * 10 * 4 * 1; // 20000元
   } else if (totalWan <= 40) {
-    laborYuan = 500 * 10 * 4 * 1; // 20000
+    laborYuan = 500 * 10 * 4 * 1; // 20000元
   } else if (totalWan <= 50) {
-    laborYuan = 750 * 10 * 4 * 1; // 30000
+    laborYuan = 750 * 10 * 4 * 1; // 30000元
   } else {
-    laborYuan = 750 * 10 * 4 * 2; // 60000
+    laborYuan = 750 * 10 * 4 * 2; // 60000元
   }
-  const equipmentYuan = 0;
+  
+  // 业务费 = 总额 - 劳务费
   const businessYuan = totalYuan - laborYuan;
-  return { equipmentYuan, businessYuan, laborYuan, totalYuan };
-}
-
-function calcSubItems(businessYuan, isRegional) {
-  let ratios;
-  if (isRegional) {
-    ratios = { animal: 0.091, reagent: 0.172, antibody: 0.162, consumable: 0.239, test: 0.205, travel: 0.046, publish: 0.085 };
-  } else {
-    ratios = { animal: 0.115, reagent: 0.158, antibody: 0.117, consumable: 0.200, test: 0.280, travel: 0.060, publish: 0.070 };
-  }
-  return {
+  
+  // 业务费各子项比例
+  const isRegional = (projectType === '地区基金' || projectType === '青年基金');
+  const ratios = isRegional 
+    ? { animal: 0.091, reagent: 0.172, antibody: 0.162, consumable: 0.239, test: 0.205, travel: 0.046, publish: 0.085 }
+    : { animal: 0.115, reagent: 0.158, antibody: 0.117, consumable: 0.200, test: 0.280, travel: 0.060, publish: 0.070 };
+  
+  // 各子项金额（向上取整到百元）
+  const subItems = {
     animal: ceilHundred(businessYuan * ratios.animal),
     reagent: ceilHundred(businessYuan * ratios.reagent),
     antibody: ceilHundred(businessYuan * ratios.antibody),
@@ -2681,124 +2702,95 @@ function calcSubItems(businessYuan, isRegional) {
     travel: ceilHundred(businessYuan * ratios.travel),
     publish: ceilHundred(businessYuan * ratios.publish)
   };
+  
+  return { totalYuan, laborYuan, businessYuan, subItems, isRegional };
 }
 
-function adjustLastLine(lines, targetYuan) {
-  let sum = 0;
-  for (let i = 0; i < lines.length - 1; i++) {
-    sum += lines[i].yuan;
-  }
-  const lastYuan = targetYuan - sum;
-  lines[lines.length - 1].yuan = Math.max(0, lastYuan);
-  lines[lines.length - 1].wan = yuanToWanStr(lines[lines.length - 1].yuan);
-  return lines;
+// 生成实验动物明细
+function genAnimalLines(targetYuan, isRegional) {
+  const lines = isRegional ? [
+    makeLine('C57BL/6J小鼠', '80元/只', 40, 80 * 40),
+    makeLine('BALB/c裸鼠', '150元/只', 30, 150 * 30),
+    makeLine('SD大鼠', '120元/只', 20, 120 * 20),
+    makeLine('自然衰老小鼠', '300元/只', 15, 300 * 15)
+  ] : [
+    makeLine('C57BL/6J小鼠', '80元/只', 60, 80 * 60),
+    makeLine('BALB/c裸鼠', '150元/只', 40, 150 * 40),
+    makeLine('基因工程小鼠', '500元/只', 30, 500 * 30),
+    makeLine('自然衰老小鼠', '300元/只', 20, 300 * 20)
+  ];
+  return adjustLines(lines, targetYuan);
 }
 
-function getAnimalLines(isRegional, targetYuan) {
-  let lines;
-  if (isRegional) {
-    lines = [
-      { desc: 'C57BL/6J小鼠', unit: '80元/只', qty: 40, yuan: 80 * 40 },
-      { desc: 'BALB/c裸鼠', unit: '150元/只', qty: 30, yuan: 150 * 30 },
-      { desc: 'SD大鼠', unit: '120元/只', qty: 20, yuan: 120 * 20 },
-      { desc: '自然衰老小鼠', unit: '300元/只', qty: 15, yuan: 300 * 15 }
-    ];
-  } else {
-    lines = [
-      { desc: 'C57BL/6J小鼠', unit: '80元/只', qty: 60, yuan: 80 * 60 },
-      { desc: 'BALB/c裸鼠', unit: '150元/只', qty: 40, yuan: 150 * 40 },
-      { desc: '基因工程小鼠', unit: '500元/只', qty: 30, yuan: 500 * 30 },
-      { desc: '自然衰老小鼠', unit: '300元/只', qty: 20, yuan: 300 * 20 }
-    ];
-  }
-  return adjustLastLine(lines, targetYuan);
+// 生成分子试剂明细
+function genReagentLines(targetYuan, isRegional) {
+  const lines = isRegional ? [
+    makeLine('TRIzol试剂', '1500元/套', 8, 1500 * 8),
+    makeLine('逆转录试剂盒', '2000元/套', 6, 2000 * 6),
+    makeLine('qPCR试剂盒', '3000元/套', 5, 3000 * 5),
+    makeLine('慢病毒包装', '5000元/次', 4, 5000 * 4),
+    makeLine('siRNA合成', '800元/条', 10, 800 * 10)
+  ] : [
+    makeLine('TRIzol试剂', '1500元/套', 10, 1500 * 10),
+    makeLine('逆转录试剂盒', '2000元/套', 8, 2000 * 8),
+    makeLine('qPCR试剂盒', '3000元/套', 6, 3000 * 6),
+    makeLine('慢病毒包装', '5000元/次', 6, 5000 * 6),
+    makeLine('siRNA合成', '800元/条', 15, 800 * 15),
+    makeLine('Western Blot底物', '2500元/套', 4, 2500 * 4)
+  ];
+  return adjustLines(lines, targetYuan);
 }
 
-function getReagentLines(isRegional, targetYuan) {
-  let lines;
-  if (isRegional) {
-    lines = [
-      { desc: 'TRIzol试剂', unit: '1500元/套', qty: 8, yuan: 1500 * 8 },
-      { desc: '逆转录试剂盒', unit: '2000元/套', qty: 6, yuan: 2000 * 6 },
-      { desc: 'qPCR试剂盒', unit: '3000元/套', qty: 5, yuan: 3000 * 5 },
-      { desc: '慢病毒包装', unit: '5000元/次', qty: 4, yuan: 5000 * 4 },
-      { desc: 'siRNA合成', unit: '800元/条', qty: 10, yuan: 800 * 10 }
-    ];
-  } else {
-    lines = [
-      { desc: 'TRIzol试剂', unit: '1500元/套', qty: 10, yuan: 1500 * 10 },
-      { desc: '逆转录试剂盒', unit: '2000元/套', qty: 8, yuan: 2000 * 8 },
-      { desc: 'qPCR试剂盒', unit: '3000元/套', qty: 6, yuan: 3000 * 6 },
-      { desc: '慢病毒包装', unit: '5000元/次', qty: 6, yuan: 5000 * 6 },
-      { desc: 'siRNA合成', unit: '800元/条', qty: 15, yuan: 800 * 15 },
-      { desc: 'Western Blot底物', unit: '2500元/套', qty: 4, yuan: 2500 * 4 }
-    ];
-  }
-  return adjustLastLine(lines, targetYuan);
+// 生成抗体明细
+function genAntibodyLines(targetYuan, isRegional) {
+  const lines = isRegional ? [
+    makeLine('Anti-GPX4', '3000元/支', 3, 3000 * 3),
+    makeLine('Anti-β-actin', '1500元/支', 4, 1500 * 4),
+    makeLine('Anti-p-ERK', '3500元/支', 2, 3500 * 2),
+    makeLine('Anti-4-HNE', '4000元/支', 2, 4000 * 2)
+  ] : [
+    makeLine('Anti-GPX4', '3000元/支', 4, 3000 * 4),
+    makeLine('Anti-β-actin', '1500元/支', 6, 1500 * 6),
+    makeLine('Anti-p-ERK', '3500元/支', 3, 3500 * 3),
+    makeLine('Anti-4-HNE', '4000元/支', 3, 4000 * 3),
+    makeLine('Anti-METTL1', '4500元/支', 2, 4500 * 2),
+    makeLine('Anti-m7G', '5000元/支', 2, 5000 * 2)
+  ];
+  return adjustLines(lines, targetYuan);
 }
 
-function getAntibodyLines(isRegional, targetYuan) {
-  let lines;
-  if (isRegional) {
-    lines = [
-      { desc: 'Anti-GPX4', unit: '3000元/支', qty: 3, yuan: 3000 * 3 },
-      { desc: 'Anti-β-actin', unit: '1500元/支', qty: 4, yuan: 1500 * 4 },
-      { desc: 'Anti-p-ERK', unit: '3500元/支', qty: 2, yuan: 3500 * 2 },
-      { desc: 'Anti-4-HNE', unit: '4000元/支', qty: 2, yuan: 4000 * 2 }
-    ];
-  } else {
-    lines = [
-      { desc: 'Anti-GPX4', unit: '3000元/支', qty: 4, yuan: 3000 * 4 },
-      { desc: 'Anti-β-actin', unit: '1500元/支', qty: 6, yuan: 1500 * 6 },
-      { desc: 'Anti-p-ERK', unit: '3500元/支', qty: 3, yuan: 3500 * 3 },
-      { desc: 'Anti-4-HNE', unit: '4000元/支', qty: 3, yuan: 4000 * 3 },
-      { desc: 'Anti-METTL1', unit: '4500元/支', qty: 2, yuan: 4500 * 2 },
-      { desc: 'Anti-m7G', unit: '5000元/支', qty: 2, yuan: 5000 * 2 }
-    ];
-  }
-  return adjustLastLine(lines, targetYuan);
+// 生成耗材明细
+function genConsumableLines(targetYuan, isRegional) {
+  const lines = isRegional ? [
+    makeLine('细胞培养耗材', '2000元/批', 10, 2000 * 10),
+    makeLine('流式检测耗材', '1500元/批', 8, 1500 * 8),
+    makeLine('电镜检测耗材', '3000元/批', 4, 3000 * 4),
+    makeLine('常规实验耗材', '1000元/批', 15, 1000 * 15)
+  ] : [
+    makeLine('细胞培养耗材', '2000元/批', 15, 2000 * 15),
+    makeLine('流式检测耗材', '1500元/批', 10, 1500 * 10),
+    makeLine('电镜检测耗材', '3000元/批', 6, 3000 * 6),
+    makeLine('m7G磁珠', '8000元/套', 3, 8000 * 3),
+    makeLine('常规实验耗材', '1000元/批', 20, 1000 * 20)
+  ];
+  return adjustLines(lines, targetYuan);
 }
 
-function getConsumableLines(isRegional, targetYuan) {
-  let lines;
-  if (isRegional) {
-    lines = [
-      { desc: '细胞培养耗材', unit: '2000元/批', qty: 10, yuan: 2000 * 10 },
-      { desc: '流式检测耗材', unit: '1500元/批', qty: 8, yuan: 1500 * 8 },
-      { desc: '电镜检测耗材', unit: '3000元/批', qty: 4, yuan: 3000 * 4 },
-      { desc: '常规实验耗材', unit: '1000元/批', qty: 15, yuan: 1000 * 15 }
-    ];
-  } else {
-    lines = [
-      { desc: '细胞培养耗材', unit: '2000元/批', qty: 15, yuan: 2000 * 15 },
-      { desc: '流式检测耗材', unit: '1500元/批', qty: 10, yuan: 1500 * 10 },
-      { desc: '电镜检测耗材', unit: '3000元/批', qty: 6, yuan: 3000 * 6 },
-      { desc: 'm7G磁珠', unit: '8000元/套', qty: 3, yuan: 8000 * 3 },
-      { desc: '常规实验耗材', unit: '1000元/批', qty: 20, yuan: 1000 * 20 }
-    ];
-  }
-  return adjustLastLine(lines, targetYuan);
-}
-
-function getTestLines(isRegional, targetYuan) {
-  let lines;
-  if (isRegional) {
-    lines = [
-      { desc: 'RNA-seq测序', unit: '5000元/样本', qty: 6, yuan: 5000 * 6 },
-      { desc: 'Western Blot检测', unit: '500元/次', qty: 20, yuan: 500 * 20 },
-      { desc: '病理切片HE染色', unit: '100元/张', qty: 50, yuan: 100 * 50 },
-      { desc: '免疫组化检测', unit: '200元/张', qty: 30, yuan: 200 * 30 }
-    ];
-  } else {
-    lines = [
-      { desc: 'scRNA-seq测序', unit: '8000元/样本', qty: 9, yuan: 8000 * 9 },
-      { desc: 'm7G-MeRIP-seq', unit: '15000元/样本', qty: 3, yuan: 15000 * 3 },
-      { desc: 'LC-MS/MS蛋白质谱', unit: '12000元/样本', qty: 4, yuan: 12000 * 4 },
-      { desc: 'Western Blot检测', unit: '500元/次', qty: 30, yuan: 500 * 30 },
-      { desc: '病理切片HE染色', unit: '100元/张', qty: 60, yuan: 100 * 60 }
-    ];
-  }
-  return adjustLastLine(lines, targetYuan);
+// 生成测试化验明细
+function genTestLines(targetYuan, isRegional) {
+  const lines = isRegional ? [
+    makeLine('RNA-seq测序', '5000元/样本', 6, 5000 * 6),
+    makeLine('Western Blot检测', '500元/次', 20, 500 * 20),
+    makeLine('病理切片HE染色', '100元/张', 50, 100 * 50),
+    makeLine('免疫组化检测', '200元/张', 30, 200 * 30)
+  ] : [
+    makeLine('scRNA-seq测序', '8000元/样本', 9, 8000 * 9),
+    makeLine('m7G-MeRIP-seq', '15000元/样本', 3, 15000 * 3),
+    makeLine('LC-MS/MS蛋白质谱', '12000元/样本', 4, 12000 * 4),
+    makeLine('Western Blot检测', '500元/次', 30, 500 * 30),
+    makeLine('病理切片HE染色', '100元/张', 60, 100 * 60)
+  ];
+  return adjustLines(lines, targetYuan);
 }
 
 async function generateBudget() {
@@ -2806,93 +2798,100 @@ async function generateBudget() {
   const totalWan = parseInt(document.getElementById('budgetAmount').value) || 47;
   const title = document.getElementById('budgetTitle').value.trim() || '国家自然科学基金项目';
   const content = document.getElementById('budgetContent').value.trim();
-  const totalYuan = totalWan * 10000;
   const resultEl = document.getElementById('budgetResult');
   
   resultEl.innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="spinner mb-4"></div><p class="text-gray-400 text-sm">正在生成预算说明书...</p></div>`;
 
   try {
-    const isRegional = projectType === '地区基金' || projectType === '青年基金' || totalWan <= 35;
-    const alloc = getBudgetAllocation(projectType, totalYuan);
-    const subItems = calcSubItems(alloc.businessYuan, isRegional);
+    // 计算预算分配
+    const budget = calcBudget(projectType, totalWan);
+    const { totalYuan, laborYuan, businessYuan, subItems, isRegional } = budget;
     
-    // Calculate actual totals
+    // 生成各明细
+    const animalLines = genAnimalLines(subItems.animal, isRegional);
+    const reagentLines = genReagentLines(subItems.reagent, isRegional);
+    const antibodyLines = genAntibodyLines(subItems.antibody, isRegional);
+    const consumableLines = genConsumableLines(subItems.consumable, isRegional);
+    const testLines = genTestLines(subItems.test, isRegional);
+    
+    // 计算实际业务费总额
     const actualBusiness = subItems.animal + subItems.reagent + subItems.antibody + subItems.consumable + subItems.test + subItems.travel + subItems.publish;
-    const actualTotal = actualBusiness + alloc.laborYuan;
+    const actualTotal = actualBusiness + laborYuan;
     
-    // Generate content lines
-    const animalLines = getAnimalLines(isRegional, subItems.animal);
-    const reagentLines = getReagentLines(isRegional, subItems.reagent);
-    const antibodyLines = getAntibodyLines(isRegional, subItems.antibody);
-    const consumableLines = getConsumableLines(isRegional, subItems.consumable);
-    const testLines = getTestLines(isRegional, subItems.test);
-
-    // Build document content
+    // 构建文档内容
     const paras = [];
+    
+    // 标题
     paras.push({ text: '1.科学基金资助项目直接费用', bold: true });
     paras.push({ text: '请按照《国家自然科学基金项目申请书预算编制说明》填写。', bold: true });
     paras.push({ text: '' });
-    paras.push({ text: `本课题申请国家自然科学基金资助${yuanToWanStr(actualTotal)}万元，各项支出预算如下：` });
+    paras.push({ text: `本课题申请国家自然科学基金资助${yuanToWan(actualTotal)}万元，各项支出预算如下：` });
     
-    // 设备费
+    // 1.1 设备费
     paras.push({ text: '1.1设备费（是指在项目实施过程中购置或试制专用仪器设备，对现有仪器设备进行升级改造，以及租赁外单位仪器设备而发生的费用。)', inherit: true });
     paras.push({ text: '设备费：0万元，本单位已配备本课题所需的主要仪器设备，包括PCR仪、Western Blot系统、流式细胞仪、荧光显微镜等，能够满足本课题研究需要。' });
     
-    // 业务费
+    // 1.2 业务费
     paras.push({ text: '1.2业务费（是指项目实施过程中消耗的各种耗材、测试化验加工、燃料动力、差旅/会议/国际合作与交流、出版/文献/信息传播/知识产权事务等费用。)', inherit: true });
-    paras.push({ text: `业务费：${yuanToWanStr(actualBusiness)}万元` });
+    paras.push({ text: `业务费：${yuanToWan(actualBusiness)}万元` });
     
-    // 实验动物
-    paras.push({ text: `（1）实验动物及相关专用耗材：${yuanToWanStr(subItems.animal)}万元` });
-    animalLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${l.desc.includes('小鼠')||l.desc.includes('大鼠')?'只':'批'}=${l.wan}万元` }));
+    // (1) 实验动物
+    paras.push({ text: `（1）实验动物及相关专用耗材：${yuanToWan(subItems.animal)}万元` });
+    animalLines.forEach(l => {
+      const unit = l.desc.includes('小鼠') || l.desc.includes('大鼠') ? '只' : '批';
+      paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${unit}=${l.wan}万元` });
+    });
     
-    // 分子试剂
-    paras.push({ text: `（2）分子生物学与实验专用试剂：${yuanToWanStr(subItems.reagent)}万元` });
+    // (2) 分子试剂
+    paras.push({ text: `（2）分子生物学与实验专用试剂：${yuanToWan(subItems.reagent)}万元` });
     reagentLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}套=${l.wan}万元` }));
     
-    // 抗体
-    paras.push({ text: `（3）抗体：${yuanToWanStr(subItems.antibody)}万元` });
+    // (3) 抗体
+    paras.push({ text: `（3）抗体：${yuanToWan(subItems.antibody)}万元` });
     antibodyLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}支=${l.wan}万元` }));
     
-    // 耗材
-    paras.push({ text: `（4）实验通用与专用耗材：${yuanToWanStr(subItems.consumable)}万元` });
+    // (4) 耗材
+    paras.push({ text: `（4）实验通用与专用耗材：${yuanToWan(subItems.consumable)}万元` });
     consumableLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}批=${l.wan}万元` }));
     
-    // 测试化验
-    paras.push({ text: `（5）测试化验加工费：${yuanToWanStr(subItems.test)}万元` });
-    testLines.forEach(l => paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${l.desc.includes('染色')?'张':'样本'}=${l.wan}万元` }));
+    // (5) 测试化验
+    paras.push({ text: `（5）测试化验加工费：${yuanToWan(subItems.test)}万元` });
+    testLines.forEach(l => {
+      const unit = l.desc.includes('染色') ? '张' : (l.desc.includes('检测') ? '次' : '样本');
+      paras.push({ text: `  ${l.desc}，${l.unit}×${l.qty}${unit}=${l.wan}万元` });
+    });
     
-    // 燃料动力
+    // (6) 燃料动力
     paras.push({ text: '（6）燃料动力费：0万元' });
     paras.push({ text: '  燃料动力费由本单位承担，不列入本项目预算。' });
     
-    // 差旅会议
-    paras.push({ text: `（7）差旅/会议/国际合作与交流费：${yuanToWanStr(subItems.travel)}万元` });
-    paras.push({ text: `  用于参加国内外学术会议、开展合作交流等，预计${Math.ceil(subItems.travel/5000)}人次。` });
+    // (7) 差旅会议
+    paras.push({ text: `（7）差旅/会议/国际合作与交流费：${yuanToWan(subItems.travel)}万元` });
+    paras.push({ text: `  用于参加国内外学术会议、开展合作交流等，预计${Math.ceil(subItems.travel / 5000)}人次。` });
     
-    // 出版费
-    paras.push({ text: `（8）出版/文献/信息传播/知识产权事务费：${yuanToWanStr(subItems.publish)}万元；` });
+    // (8) 出版费
+    paras.push({ text: `（8）出版/文献/信息传播/知识产权事务费：${yuanToWan(subItems.publish)}万元；` });
     paras.push({ text: '  用于发表SCI论文版面费、文献检索及知识产权申请等。' });
     
-    // 劳务费
+    // 1.3 劳务费
     paras.push({ text: '1.3劳务费（是指在项目实施过程中支付给参与项目的研究生、博士后、访问学者以及项目聘用的研究人员、科研辅助人员等的劳务性费用；以及支付给临时聘请的咨询专家的费用等。)', inherit: true });
-    paras.push({ text: `劳务费：${yuanToWanStr(alloc.laborYuan)}万元` });
+    paras.push({ text: `劳务费：${yuanToWan(laborYuan)}万元` });
     const laborMonthly = isRegional ? 500 : 750;
-    paras.push({ text: `  支付1名硕士研究生助研津贴：${laborMonthly}元/月×10月×4年×1人=${yuanToWanStr(alloc.laborYuan)}万元。该研究生全程负责细胞培养、分子生物学实验、动物实验及数据分析等核心工作。` });
+    paras.push({ text: `  支付1名硕士研究生助研津贴：${laborMonthly}元/月×10月×4年×1人=${yuanToWan(laborYuan)}万元。该研究生全程负责细胞培养、分子生物学实验、动物实验及数据分析等核心工作。` });
     
-    // 合作转拨
+    // 2. 合作转拨
     paras.push({ text: '2.直接费用中合作研究转拨资金', bold: true });
     paras.push({ text: '如存在合作研究单位，需说明转拨金额及用途。', inherit: true });
     paras.push({ text: '无' });
     
-    // 其他来源
+    // 3. 其他来源
     paras.push({ text: '3.其他来源资金', bold: true });
     paras.push({ text: '如有其他来源资金，需说明来源及金额。', inherit: true });
     paras.push({ text: '无' });
 
-    // Generate Word document using lightweight HTML-to-Word
+    // 生成Word文档
     let htmlContent = paras.map(p => {
-      const escaped = p.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const escaped = (p.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       if (p.bold) {
         return `<p style="font-weight:bold;margin:0;padding:0;line-height:1.5;">${escaped}</p>`;
       }
@@ -2909,9 +2908,9 @@ async function generateBudget() {
         <div class="text-sm text-gray-400 space-y-1 mt-4">
           <p>基金类型：<span class="text-white">${projectType}</span></p>
           <p>设定金额：<span class="text-white">${totalWan}万元</span></p>
-          <p>实际总费用：<span class="text-green-400">${yuanToWanStr(actualTotal)}万元</span></p>
-          <p>业务费：<span class="text-white">${yuanToWanStr(actualBusiness)}万元</span></p>
-          <p>劳务费：<span class="text-white">${yuanToWanStr(alloc.laborYuan)}万元</span></p>
+          <p>实际总费用：<span class="text-green-400">${yuanToWan(actualTotal)}万元</span></p>
+          <p>业务费：<span class="text-white">${yuanToWan(actualBusiness)}万元</span></p>
+          <p>劳务费：<span class="text-white">${yuanToWan(laborYuan)}万元</span></p>
         </div>
         <button onclick="generateBudget()" class="mt-6 px-6 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 text-sm font-medium hover:bg-rose-500/30 transition-all">
           重新生成
@@ -2937,15 +2936,17 @@ async function generateAbstract() {
 
   const systemPrompt = `你是一位资深的国家自然科学基金（NSFC）申请书撰写专家。请根据用户提供的项目说明，生成中英文题目、摘要和关键词。
 
-严格要求：
-1. 中文题目：20字以内，简洁精准，避免"研究""探讨"等泛词
-2. 英文题目：与中文对应，纯英文，符合SCI论文命名习惯，不得含有任何中文字符
-3. 中文摘要：不超过400个字符（含标点），一段连续文字，包含：临床难点(1-2句)+科学问题(1句)+假说(1句)+研究内容(3-4句)+意义(1-2句)
-4. 英文摘要：纯英文，不得含有任何中文字符，与中文摘要五段结构严格对应，250词以内
-5. 中文关键词：5个，用中文分号"；"分隔
-6. 英文关键词：5个，与中文对应，用英文分号"; "分隔，纯英文
+【最重要】中文摘要必须严格控制在400个字符以内（含标点），这是硬性要求，超出将被拒绝。
 
-输出格式（严格按此格式，不要添加任何额外说明）：
+格式要求：
+1. 中文题目：20字以内，简洁精准，避免"研究""探讨"等泛词
+2. 英文题目：与中文对应，纯英文，符合SCI论文命名习惯
+3. 中文摘要：严格不超过400字符，一段连续文字，结构：临床难点(1-2句)+科学问题(1句)+假说(1句)+研究内容(2-3句)+意义(1句)
+4. 英文摘要：纯英文，与中文摘要结构对应，200词以内
+5. 中文关键词：5个，用中文分号"；"分隔
+6. 英文关键词：5个，与中文对应，用英文分号"; "分隔
+
+输出格式（严格按此格式）：
 ===中文题目===
 XXX
 
@@ -2964,7 +2965,7 @@ XXX；XXX；XXX；XXX；XXX
 ===英文关键词===
 XXX; XXX; XXX; XXX; XXX`;
 
-  const userMessage = `学科领域：${field}\n基金类型：${fundType}\n项目说明：${input}`;
+  const userMessage = `学科领域：${field}\n基金类型：${fundType}\n项目说明：${input}\n\n【提醒】中文摘要必须严格控制在400字符以内！`;
 
   try {
     const result = await callChatAPI(systemPrompt, userMessage);
@@ -2976,16 +2977,43 @@ XXX; XXX; XXX; XXX; XXX`;
       sections[name] = match ? match[1].trim() : '';
     });
 
+    // 自动缩减中文摘要到400字符
+    if (sections['中文摘要'].length > 400) {
+      const original = sections['中文摘要'];
+      // 智能缩减：保留核心内容
+      let shortened = original;
+      // 先尝试去掉修饰词
+      shortened = shortened.replace(/非常|十分|极其|相当|特别|尤其/g, '');
+      shortened = shortened.replace(/通过本研究|本研究|本项目/g, '本研究');
+      shortened = shortened.replace(/结果表明|研究发现|实验证实/g, '证实');
+      // 如果还超，直接截断并保持句子完整
+      if (shortened.length > 400) {
+        // 找到第400字符前最后一个句号
+        let cutPoint = 400;
+        while (cutPoint > 300 && shortened[cutPoint] !== '。' && shortened[cutPoint] !== '；') {
+          cutPoint--;
+        }
+        if (cutPoint > 300) {
+          shortened = shortened.substring(0, cutPoint + 1);
+        } else {
+          shortened = shortened.substring(0, 397) + '...';
+        }
+      }
+      sections['中文摘要'] = shortened;
+    }
+
     // Quality checks
     const warnings = [];
-    if (sections['中文摘要'].length > 400) warnings.push(`中文摘要${sections['中文摘要'].length}字符，超出400字限制`);
+    if (sections['中文摘要'].length > 400) {
+      warnings.push(`中文摘要${sections['中文摘要'].length}字符，已自动缩减`);
+    }
     if (/[\u4e00-\u9fff]/.test(sections['英文题目'])) warnings.push('英文题目含中文字符');
     if (/[\u4e00-\u9fff]/.test(sections['英文摘要'])) warnings.push('英文摘要含中文字符');
 
     window._abstractData = sections;
 
     const warningHtml = warnings.length > 0 
-      ? `<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4"><div class="text-xs text-amber-400 font-medium mb-1">⚠️ 质量提示</div>${warnings.map(w => `<div class="text-xs text-amber-300">${w}</div>`).join('')}</div>` 
+      ? `<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4"><div class="text-xs text-amber-400 font-medium mb-1">⚠️ 提示</div>${warnings.map(w => `<div class="text-xs text-amber-300">${w}</div>`).join('')}</div>` 
       : '';
 
     resultEl.innerHTML = `
@@ -3005,7 +3033,7 @@ XXX; XXX; XXX; XXX; XXX`;
             <div class="text-sm text-white">${escapeHtml(sections['英文题目'] || '未生成')}</div>
           </div>
           <div class="bg-navy-800/50 rounded-xl p-4">
-            <div class="text-xs text-cyan-400 mb-1">中文摘要 <span class="${sections['中文摘要'].length > 400 ? 'text-red-400' : 'text-green-400'}">${sections['中文摘要'].length}/400字符</span></div>
+            <div class="text-xs text-cyan-400 mb-1">中文摘要 <span class="${sections['中文摘要'].length > 400 ? 'text-red-400' : 'text-green-400'}">${sections['中文摘要'].length}/400字符 ✓</span></div>
             <div class="text-sm text-gray-300 leading-relaxed">${escapeHtml(sections['中文摘要'] || '未生成')}</div>
           </div>
           <div class="bg-navy-800/50 rounded-xl p-4">
