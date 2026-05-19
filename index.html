@@ -1810,7 +1810,7 @@ function parseElisaPaste() {
   
   // 切换到手动模式显示解析结果
   switchElisaInputMode('manual');
-  showToast(`成功解析 ${data.length} 个标准品`, 'success');
+  showToast(`成功解析 ${data.length} 个标准品，点击"生成标准曲线"按钮继续`, 'success');
 }
 
 // 随机生成标准曲线数据（浓度范围0-400）
@@ -2155,10 +2155,16 @@ function fit4PL(xData, yData) {
   const n = xData.length;
   if (n < 4) return null;
   
-  // 初始参数估计
-  let bottom = Math.min(...yData) * 0.95;
-  let top = Math.max(...yData) * 1.05;
-  let logEC50 = Math.log10(xData[Math.floor(n / 2)]);
+  // 数据按浓度排序，确保确定性结果
+  const sortedIndices = xData.map((x, i) => ({ x, i })).sort((a, b) => a.x - b.x).map(item => item.i);
+  const sortedX = sortedIndices.map(i => xData[i]);
+  const sortedY = sortedIndices.map(i => yData[i]);
+  
+  // 初始参数估计（确定性方法）
+  let bottom = Math.min(...sortedY) * 0.95;
+  let top = Math.max(...sortedY) * 1.05;
+  // 使用中间点的浓度作为EC50初始估计
+  let logEC50 = Math.log10(sortedX[Math.floor(n / 2)]);
   let hillSlope = 1.0;
   
   // 使用Levenberg-Marquardt算法的简化版本进行迭代优化
@@ -2171,22 +2177,21 @@ function fit4PL(xData, yData) {
     let rss = 0;
     const residuals = [];
     for (let i = 0; i < n; i++) {
-      const yPred = bottom + (top - bottom) / (1 + Math.pow(10, (logEC50 - Math.log10(xData[i])) * hillSlope));
-      const residual = yData[i] - yPred;
+      const yPred = bottom + (top - bottom) / (1 + Math.pow(10, (logEC50 - Math.log10(sortedX[i])) * hillSlope));
+      const residual = sortedY[i] - yPred;
       residuals.push(residual);
       rss += residual * residual;
     }
     
-    // 检查收敛
-    if (Math.abs(prevRSS - rss) < 1e-10) break;
+    // 检查收敛（使用相对收敛准则）
+    if (Math.abs(prevRSS - rss) < 1e-12 || (prevRSS > 0 && Math.abs((prevRSS - rss) / prevRSS) < 1e-12)) break;
     prevRSS = rss;
     
     // 计算Jacobian矩阵 (数值微分)
-    const eps = 1e-7;
     const jacobian = [];
     for (let i = 0; i < n; i++) {
       const row = [];
-      const xi = Math.log10(xData[i]);
+      const xi = Math.log10(sortedX[i]);
       const expTerm = Math.pow(10, (logEC50 - xi) * hillSlope);
       const denom = 1 + expTerm;
       
