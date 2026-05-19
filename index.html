@@ -1882,7 +1882,8 @@ function generateElisaCurve() {
     const od2 = parseFloat(row.querySelector('.elisa-od2')?.value);
     const od3 = parseFloat(row.querySelector('.elisa-od3')?.value);
     
-    if (conc > 0 && od1 > 0 && od2 > 0 && od3 > 0) {
+    // 允许浓度为0（空白对照），但OD值必须有效
+    if (!isNaN(conc) && conc >= 0 && od1 > 0 && od2 > 0 && od3 > 0) {
       const meanOD = (od1 + od2 + od3) / 3;
       standards.push({ conc, od: meanOD, od1, od2, od3 });
     }
@@ -1897,9 +1898,15 @@ function generateElisaCurve() {
   standards.sort((a, b) => a.conc - b.conc);
   elisaCurrentStandards = standards;
   
-  // 拟合4PL曲线
-  const xData = standards.map(s => s.conc);
-  const yData = standards.map(s => s.od);
+  // 拟合4PL曲线（排除浓度为0的空白对照）
+  const fitStandards = standards.filter(s => s.conc > 0);
+  if (fitStandards.length < 4) {
+    showToast('标准品浓度需至少4个大于0的数据点进行拟合', 'warning');
+    return;
+  }
+  
+  const xData = fitStandards.map(s => s.conc);
+  const yData = fitStandards.map(s => s.od);
   
   elisaCurrentParams = fit4PL(xData, yData);
   
@@ -1908,7 +1915,7 @@ function generateElisaCurve() {
     return;
   }
   
-  // 显示方程参数
+  // 显示方程参数（更新）
   document.getElementById('elisaEquation').classList.remove('hidden');
   document.getElementById('elisaParamTop').textContent = elisaCurrentParams.top.toFixed(4);
   document.getElementById('elisaParamBottom').textContent = elisaCurrentParams.bottom.toFixed(4);
@@ -1919,10 +1926,17 @@ function generateElisaCurve() {
   // 显示下载按钮
   document.getElementById('elisaChartActions').classList.remove('hidden');
   
-  // 绘制标准曲线
+  // 清除之前的样本计算结果（数据已更新，需要重新计算）
+  elisaResults = [];
+  const resultsBody = document.getElementById('elisaResultsTable');
+  if (resultsBody) {
+    resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500 text-sm">请输入样本OD值并点击"计算浓度"</td></tr>';
+  }
+  
+  // 绘制标准曲线（会自动清除旧图表）
   drawElisaChart(standards, elisaCurrentParams);
   
-  showToast(`标准曲线生成成功！R² = ${elisaCurrentParams.r2.toFixed(4)}`, 'success');
+  showToast(`标准曲线已更新！R² = ${elisaCurrentParams.r2.toFixed(4)}`, 'success');
 }
 
 // 下载标准曲线图（300PPI PNG）
@@ -1954,7 +1968,9 @@ function downloadElisaChartPNG() {
   const params = elisaCurrentParams;
   if (!standards || !params) return;
   
-  const minConc = Math.min(...standards.map(s => s.conc));
+  // 只使用浓度>0的数据点计算坐标范围
+  const positiveStandards = standards.filter(s => s.conc > 0);
+  const minConc = Math.min(...positiveStandards.map(s => s.conc));
   const maxConc = Math.max(...standards.map(s => s.conc));
   const minOD = Math.min(...standards.map(s => s.od), params.bottom) * 0.9;
   const maxOD = Math.max(...standards.map(s => s.od), params.top) * 1.05;
@@ -1963,7 +1979,11 @@ function downloadElisaChartPNG() {
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
-  const xToPx = (conc) => padding.left + (Math.log10(conc) - Math.log10(minConc)) / (Math.log10(maxConc) - Math.log10(minConc)) * chartWidth;
+  // 坐标转换函数（处理浓度为0的情况）
+  const xToPx = (conc) => {
+    if (conc <= 0) return padding.left;
+    return padding.left + (Math.log10(conc) - Math.log10(minConc)) / (Math.log10(maxConc) - Math.log10(minConc)) * chartWidth;
+  };
   const yToPx = (od) => padding.top + chartHeight - (od - minOD) / (maxOD - minOD) * chartHeight;
   
   // 绘制标题
@@ -2317,9 +2337,12 @@ function drawElisaChart(standards, params) {
   const container = document.getElementById('elisaChartContainer');
   if (!container) return;
   
-  // 生成拟合曲线数据点
-  const minConc = Math.min(...standards.map(s => s.conc));
+  // 只使用浓度>0的数据点计算坐标范围和绘制拟合曲线
+  const positiveStandards = standards.filter(s => s.conc > 0);
+  const minConc = Math.min(...positiveStandards.map(s => s.conc));
   const maxConc = Math.max(...standards.map(s => s.conc));
+  
+  // 生成拟合曲线数据点
   const fitPoints = [];
   for (let i = 0; i <= 100; i++) {
     const logConc = Math.log10(minConc) + (Math.log10(maxConc) - Math.log10(minConc)) * i / 100;
@@ -2351,8 +2374,11 @@ function drawElisaChart(standards, params) {
   const minOD = Math.min(...standards.map(s => s.od), params.bottom) * 0.9;
   const maxOD = Math.max(...standards.map(s => s.od), params.top) * 1.05;
   
-  // 坐标转换函数
-  const xToPx = (conc) => padding.left + (Math.log10(conc) - Math.log10(minConc)) / (Math.log10(maxConc) - Math.log10(minConc)) * chartWidth;
+  // 坐标转换函数（处理浓度为0的情况）
+  const xToPx = (conc) => {
+    if (conc <= 0) return padding.left; // 浓度为0的点放在最左边
+    return padding.left + (Math.log10(conc) - Math.log10(minConc)) / (Math.log10(maxConc) - Math.log10(minConc)) * chartWidth;
+  };
   const yToPx = (od) => padding.top + chartHeight - (od - minOD) / (maxOD - minOD) * chartHeight;
   
   // 绘制背景
